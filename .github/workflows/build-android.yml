@@ -1,7 +1,7 @@
 name: Android device compilation
 on:
   push:
-    branches: [main]
+    branches: [main, 'android/**']
   pull_request:
   workflow_dispatch:
 permissions:
