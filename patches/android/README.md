@@ -59,3 +59,20 @@ Reference: https://wiki.libsdl.org/SDL2/SDL_HINT_VIDEO_EXTERNAL_CONTEXT
 These fixes do not implement complete device-loss or replaced-native-surface
 recovery. No device crash trace confirming the user's capture failure was
 available during this pass. Do not claim universal capture/resume support.
+
+## Pipeline creation failure (Adreno)
+
+ulkan-pipeline-failure.patch is the final plume stage (after ulkan-prerotation.patch,
+wired in cmake/android/PreRotation.cmake). Upstream plume logged a failed
+kCreateGraphicsPipelines/kCreateComputePipelines and returned, leaving a null
+VkPipeline that VulkanCommandList::setPipeline then passed to kCmdBindPipeline.
+Qualcomm's driver dereferences that handle, producing SIGSEGV inside
+ulkan.adreno.so (reported for Banjo Recomp on Adreno 650 with
+AdrenoVK-0: Failed to link shaders. Pipeline create failed).
+
+The patch records the real VkResult under the existing
+Stage::GraphicsPipeline/Stage::ComputePipeline, logs the failing shader stages,
+and uses the established quarantine_resource path so Android shows the log-export
+UI. The bind site is also guarded. This makes the failure diagnosable; it does not
+change which pipelines the driver can link. Covered by
+untime-recomp/tests/android_startup_contract_tests.py.
