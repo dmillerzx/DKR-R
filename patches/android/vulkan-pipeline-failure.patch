@@ -1,0 +1,51 @@
+diff --git a/src/contrib/plume/plume_vulkan.cpp b/src/contrib/plume/plume_vulkan.cpp
+index d809d6c..3d317a6 100644
+--- a/src/contrib/plume/plume_vulkan.cpp
++++ b/src/contrib/plume/plume_vulkan.cpp
+@@ -1456,8 +1456,11 @@ namespace plume {
+             res = vkCreateComputePipelines(device->vk, device->pipelineCache, 1, &pipelineInfo, nullptr, &vk);
+         }
+         if (res != VK_SUCCESS) {
++            vk = VK_NULL_HANDLE;
+             fprintf(stderr, "vkCreateComputePipelines failed with error code 0x%X.\n", res);
+-            return;
++            fprintf(stderr, "[Android] Compute pipeline creation failed: entry=%s specConstants=%u\n",
++                computeShader->entryPointName.c_str(), desc.specConstantsCount);
++            dkr::runtime::graphics_health::quarantine_resource(dkr::runtime::graphics_health::Stage::ComputePipeline, res);
+         }
+     }
+ 
+@@ -1719,8 +1722,14 @@ namespace plume {
+             res = vkCreateGraphicsPipelines(device->vk, device->pipelineCache, 1, &pipelineInfo, nullptr, &vk);
+         }
+         if (res != VK_SUCCESS) {
++            vk = VK_NULL_HANDLE;
+             fprintf(stderr, "vkCreateGraphicsPipelines failed with error code 0x%X.\n", res);
+-            return;
++            fprintf(stderr, "[Android] Graphics pipeline creation failed: stages=%zu renderTargets=%u specConstants=%u\n",
++                stages.size(), desc.renderTargetCount, desc.specConstantsCount);
++            for (const VkPipelineShaderStageCreateInfo &failedStage : stages) {
++                fprintf(stderr, "[Android]   failed stage 0x%X entry=%s\n", unsigned(failedStage.stage), failedStage.pName);
++            }
++            dkr::runtime::graphics_health::quarantine_resource(dkr::runtime::graphics_health::Stage::GraphicsPipeline, res);
+         }
+     }
+ 
+@@ -3200,11 +3209,17 @@ namespace plume {
+         switch (interfacePipeline->type) {
+         case VulkanPipeline::Type::Compute: {
+             const VulkanComputePipeline *computePipeline = static_cast<const VulkanComputePipeline *>(interfacePipeline);
++            if (computePipeline->vk == VK_NULL_HANDLE) {
++                dkr::runtime::graphics_health::quarantine_resource(dkr::runtime::graphics_health::Stage::ComputePipeline, VK_ERROR_INITIALIZATION_FAILED);
++            }
+             vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline->vk);
+             break;
+         }
+         case VulkanPipeline::Type::Graphics: {
+             const VulkanGraphicsPipeline *graphicsPipeline = static_cast<const VulkanGraphicsPipeline *>(interfacePipeline);
++            if (graphicsPipeline->vk == VK_NULL_HANDLE) {
++                dkr::runtime::graphics_health::quarantine_resource(dkr::runtime::graphics_health::Stage::GraphicsPipeline, VK_ERROR_INITIALIZATION_FAILED);
++            }
+             vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->vk);
+             break;
+         }

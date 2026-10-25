@@ -38,6 +38,8 @@ jobs:
             -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=Release
       - name: Compile adapters and link the production platform subset
         run: cmake --build build/android-compile --target DKRAndroidCompileCheck --parallel 3
+      - name: Verify Android patch-chain contracts
+        run: python3 runtime-recomp/tests/android_startup_contract_tests.py
       - name: Verify arm64 ELF and 16 KB load alignment
         run: |
           python3 scripts/tests/test_verify_android_compile.py

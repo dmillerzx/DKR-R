@@ -65,6 +65,54 @@ class AndroidStartupContractTests(unittest.TestCase):
         )
         self.assertIn('"${DKRPORT_ROOT}/patches/android/vulkan-copy-contract.patch"', cmake)
 
+    # Order mirrors the plume dkr_stage_patch chain in runtime-recomp/CMakeLists.txt
+    # and cmake/android/PreRotation.cmake; vulkan-pipeline-failure is its tail.
+    PLUME_CHAIN = (
+        "patches/android/vulkan-surface-capabilities.patch",
+        "patches/android/vulkan-descriptor-safety.patch",
+        "patches/performance/vulkan-measurements.patch",
+        "patches/android/vulkan-mapped-memory.patch",
+        "patches/android/vulkan-resource-failures.patch",
+        "patches/android/vulkan-capability-preflight.patch",
+        "patches/android/vulkan-surface-recovery.patch",
+        "patches/android/vulkan-copy-contract.patch",
+        "patches/android/vulkan-pipeline-cache.patch",
+        "patches/android/vulkan-pass-retention.patch",
+        "patches/android/vulkan-read-barriers.patch",
+        "patches/android/vulkan-prerotation.patch",
+        "patches/android/vulkan-pipeline-failure.patch",
+    )
+
+    def test_failed_pipeline_never_reaches_bind(self):
+        # A failed vkCreate*Pipelines left a null handle that was bound unchecked,
+        # crashing inside vulkan.adreno.so. Apply the real chain to a private copy.
+        directory_name = Path("src/contrib/plume")
+        with tempfile.TemporaryDirectory(prefix="dkr-pipeline-failure-") as directory:
+            stage = Path(directory)
+            (stage / directory_name).mkdir(parents=True)
+            for name in ("plume_vulkan.cpp", "plume_vulkan.h"):
+                shutil.copyfile(ROOT / "extern/rt64" / directory_name / name, stage / directory_name / name)
+            subprocess.run(["git", "init", "--quiet", str(stage)], check=True)
+            for patch in self.PLUME_CHAIN:
+                subprocess.run(["git", "-C", str(stage), "apply", "--recount", "--whitespace=error",
+                                "--ignore-space-change", str(ROOT / patch)], check=True)
+            source = (stage / directory_name / "plume_vulkan.cpp").read_text()
+            graphics = source.split("VulkanGraphicsPipeline::VulkanGraphicsPipeline(", 1)[1]
+            graphics = graphics.split("VulkanGraphicsPipeline::~VulkanGraphicsPipeline", 1)[0]
+            self.assertLess(graphics.index("vkCreateGraphicsPipelines("),
+                            graphics.index("Stage::GraphicsPipeline"))
+            compute = source.split("VulkanComputePipeline::VulkanComputePipeline(", 1)[1]
+            compute = compute.split("VulkanComputePipeline::~VulkanComputePipeline", 1)[0]
+            self.assertLess(compute.index("vkCreateComputePipelines("), compute.index("Stage::ComputePipeline"))
+            bind = source.split("void VulkanCommandList::setPipeline(", 1)[1]
+            bind = bind.split("default:", 1)[0]
+            for kind, point in (("Compute", "COMPUTE"), ("Graphics", "GRAPHICS")):
+                self.assertLess(bind.index(f"Stage::{kind}Pipeline"),
+                                bind.index(f"vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_{point}"))
+        prerotation = (ROOT / "runtime-recomp/cmake/android/PreRotation.cmake").read_text()
+        self.assertIn('generated/android-prerotation" android-pipeline-failure', prerotation)
+        self.assertIn('"${DKRPORT_ROOT}/patches/android/vulkan-pipeline-failure.patch"', prerotation)
+
 
 if __name__ == "__main__":
     unittest.main()
