@@ -126,7 +126,9 @@ secrets*.json
 token*.json
 
 # DKR decomp/recomp working data generated locally
-runtime-recomp/RecompiledFuncs/
+runtime-recomp/RecompiledFuncs*/
+runtime-recomp/*.toml
+runtime-recomp/*.composed-policy.json
 runtime-recomp/RecompiledPatches/
 build/runtime-tools/
 runtime-recomp/build/

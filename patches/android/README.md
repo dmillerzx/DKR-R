@@ -62,17 +62,19 @@ available during this pass. Do not claim universal capture/resume support.
 
 ## Pipeline creation failure (Adreno)
 
-ulkan-pipeline-failure.patch is the final plume stage (after ulkan-prerotation.patch,
+vulkan-pipeline-failure.patch is the final plume stage (after vulkan-prerotation.patch,
 wired in cmake/android/PreRotation.cmake). Upstream plume logged a failed
-kCreateGraphicsPipelines/kCreateComputePipelines and returned, leaving a null
-VkPipeline that VulkanCommandList::setPipeline then passed to kCmdBindPipeline.
+vkCreateGraphicsPipelines/vkCreateComputePipelines and returned, leaving a null
+VkPipeline that VulkanCommandList::setPipeline then passed to vkCmdBindPipeline.
 Qualcomm's driver dereferences that handle, producing SIGSEGV inside
-ulkan.adreno.so (reported for Banjo Recomp on Adreno 650 with
+vulkan.adreno.so (reported for Banjo Recomp on Adreno 650 with
 AdrenoVK-0: Failed to link shaders. Pipeline create failed).
 
-The patch records the real VkResult under the existing
-Stage::GraphicsPipeline/Stage::ComputePipeline, logs the failing shader stages,
-and uses the established quarantine_resource path so Android shows the log-export
-UI. The bind site is also guarded. This makes the failure diagnosable; it does not
-change which pipelines the driver can link. Covered by
-untime-recomp/tests/android_startup_contract_tests.py.
+The patch sets failed pipeline handles to null, logs the failing shader stages,
+and guards the bind site (VulkanCommandList::setPipeline) so any attempt to bind
+a null pipeline triggers quarantine rather than passing a null handle to kCmdBindPipeline
+(preventing the ulkan.adreno.so SIGSEGV). By guarding at bind time, pipelines that are
+never used at runtime (such as unused compute or raytracing post-processing filters)
+do not cause false-positive startup terminations. Covered by
+
+untime-recomp/tests/android_startup_contract_tests.py.
