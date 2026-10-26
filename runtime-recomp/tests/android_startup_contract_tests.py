@@ -94,21 +94,33 @@ class AndroidStartupContractTests(unittest.TestCase):
                 shutil.copyfile(ROOT / "extern/rt64" / directory_name / name, stage / directory_name / name)
             subprocess.run(["git", "init", "--quiet", str(stage)], check=True)
             for patch in self.PLUME_CHAIN:
-                subprocess.run(["git", "-C", str(stage), "apply", "--recount", "--whitespace=error",
-                                "--ignore-space-change", str(ROOT / patch)], check=True)
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(stage),
+                        "apply",
+                        "--recount",
+                        "--whitespace=error",
+                        "--ignore-space-change",
+                        str(ROOT / patch),
+                    ],
+                    check=True,
+                )
             source = (stage / directory_name / "plume_vulkan.cpp").read_text()
             graphics = source.split("VulkanGraphicsPipeline::VulkanGraphicsPipeline(", 1)[1]
             graphics = graphics.split("VulkanGraphicsPipeline::~VulkanGraphicsPipeline", 1)[0]
-            self.assertLess(graphics.index("vkCreateGraphicsPipelines("),
-                            graphics.index("Stage::GraphicsPipeline"))
+            self.assertLess(graphics.index("vkCreateGraphicsPipelines("), graphics.index("Stage::GraphicsPipeline"))
             compute = source.split("VulkanComputePipeline::VulkanComputePipeline(", 1)[1]
             compute = compute.split("VulkanComputePipeline::~VulkanComputePipeline", 1)[0]
             self.assertLess(compute.index("vkCreateComputePipelines("), compute.index("Stage::ComputePipeline"))
             bind = source.split("void VulkanCommandList::setPipeline(", 1)[1]
             bind = bind.split("default:", 1)[0]
             for kind, point in (("Compute", "COMPUTE"), ("Graphics", "GRAPHICS")):
-                self.assertLess(bind.index(f"Stage::{kind}Pipeline"),
-                                bind.index(f"vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_{point}"))
+                self.assertLess(
+                    bind.index(f"Stage::{kind}Pipeline"),
+                    bind.index(f"vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_{point}"),
+                )
         prerotation = (ROOT / "runtime-recomp/cmake/android/PreRotation.cmake").read_text()
         self.assertIn('generated/android-prerotation" android-pipeline-failure', prerotation)
         self.assertIn('"${DKRPORT_ROOT}/patches/android/vulkan-pipeline-failure.patch"', prerotation)
