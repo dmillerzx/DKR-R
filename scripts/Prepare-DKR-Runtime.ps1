@@ -19,6 +19,10 @@ $LogPath = Join-Path $LogDirectory "prepare-dkr-runtime-$Timestamp.log"
 Start-Transcript -Path $LogPath -Force | Out-Null
 
 $ExpectedSha1 = '0cb115d8716dbbc2922fda38e533b9fe63bb9670'
+$KnownRevisions = @{
+    '0cb115d8716dbbc2922fda38e533b9fe63bb9670' = 'v77'
+    '6d96743d46f8c0cd0edb0ec5600b003c89b93755' = 'v80'
+}
 $DkrSource = Join-Path $ProjectRoot 'extern\dkr-decomp'
 $RuntimeRoot = Join-Path $ProjectRoot 'runtime-recomp'
 $GeneratedFunctions = Join-Path $RuntimeRoot 'RecompiledFuncs'
@@ -255,14 +259,18 @@ function Convert-ToCanonicalRom([string]$SourcePath, [string]$DestinationPath) {
     } finally {
         $sha.Dispose()
     }
-    if ($hash -ne $ExpectedSha1) {
-        Fail "The normalised ROM SHA-1 is $hash, but DKR US 1.0 requires $ExpectedSha1."
+    if (-not $KnownRevisions.ContainsKey($hash)) {
+        Fail "The normalised ROM SHA-1 is $hash, but DKR requires US 1.0 (v77: 0cb115d8716dbbc2922fda38e533b9fe63bb9670) or US Rev A (v80: 6d96743d46f8c0cd0edb0ec5600b003c89b93755)."
     }
 
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $DestinationPath) | Out-Null
     [System.IO.File]::WriteAllBytes($DestinationPath, $bytes)
     Write-Host "[OK] Canonical local build ROM written to: $DestinationPath" -ForegroundColor Green
-    return $bytes
+    return [PSCustomObject]@{
+        Bytes = $bytes
+        Hash = $hash
+        Revision = $KnownRevisions[$hash]
+    }
 }
 
 function Clone-Or-Update([string]$Name, [string]$Repository, [string]$Destination,
@@ -322,16 +330,28 @@ try {
         $Jobs = [Math]::Max(2, [Environment]::ProcessorCount - 1)
     }
 
-    Write-Step 'Preparing the pinned DKR decomp checkout'
-    $sourcePreparationArgs = @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $PSScriptRoot 'Prepare-Game-Source.ps1'))
-    if ($Force) { $sourcePreparationArgs += '-Force' }
-    & powershell.exe @sourcePreparationArgs
-    if ($LASTEXITCODE -ne 0) { Fail 'The pinned DKR decomp source could not be prepared.' }
+    if ($Force -or -not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'extern\.resolved-dkr-source.json'))) {
+        Write-Step 'Preparing the pinned DKR decomp checkout'
+        $sourcePreparationArgs = @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $PSScriptRoot 'Prepare-Game-Source.ps1'))
+        if ($Force) { $sourcePreparationArgs += '-Force' }
+        & powershell.exe @sourcePreparationArgs
+        if ($LASTEXITCODE -ne 0) { Fail 'The pinned DKR decomp source could not be prepared.' }
+    } else {
+        Write-Host '[OK] Pinned DKR decomp source already prepared.' -ForegroundColor Green
+    }
 
     Write-Step 'Locating and normalising the user-owned ROM'
     $sourceRom = Resolve-RomPath
-    $canonicalRom = Join-Path $DkrSource 'baseroms\dkr.us.v77.z64'
-    [byte[]]$romBytes = Convert-ToCanonicalRom $sourceRom $canonicalRom
+    $tempRom = Join-Path $DkrSource 'baseroms\rom_temp.z64'
+    $romResult = Convert-ToCanonicalRom $sourceRom $tempRom
+    $revision = [string]$romResult.Revision
+    [byte[]]$romBytes = $romResult.Bytes
+    $canonicalRom = Join-Path $DkrSource "baseroms\dkr.us.$revision.z64"
+    $splatRom = Join-Path $DkrSource "baseroms\baserom.us.$revision.z64"
+    [System.IO.File]::Copy($tempRom, $canonicalRom, $true)
+    [System.IO.File]::Copy($tempRom, $splatRom, $true)
+    Remove-Item -LiteralPath $tempRom -Force -ErrorAction SilentlyContinue
+    Write-Host "[OK] Detected DKR US Revision: $revision" -ForegroundColor Green
     [uint32]$romHeaderEntrypoint = ([uint32]$romBytes[8] -shl 24) -bor ([uint32]$romBytes[9] -shl 16) -bor ([uint32]$romBytes[10] -shl 8) -bor [uint32]$romBytes[11]
     $romHeaderEntrypointText = '0x{0:X8}' -f $romHeaderEntrypoint
     Write-Host "[OK] ROM header entry point: $romHeaderEntrypointText" -ForegroundColor Green
@@ -375,8 +395,8 @@ try {
         '    exit 92',
         'fi',
         '',
-        'make extract',
-        'make -j"$2"'
+        "make extract VERSION=$revision",
+        "make VERSION=$revision -j`"`$2`"" 
     )
     $buildCommand = [string]::Join("`n", $buildLines) + "`n"
     $utf8NoBomShell = New-Object System.Text.UTF8Encoding($false)
@@ -387,8 +407,8 @@ try {
     & wsl.exe --exec bash $wslBuildScript $wslDkr ([string]$Jobs)
     if ($LASTEXITCODE -ne 0) { Fail 'The matching DKR decomp build failed. The log above contains the first real decomp/toolchain error.' }
 
-    $elfPath = Join-Path $DkrSource 'build\dkr.us.v77.elf'
-    $builtRomPath = Join-Path $DkrSource 'build\dkr.us.v77.z64'
+    $elfPath = Join-Path $DkrSource "build\dkr.us.$revision.elf"
+    $builtRomPath = Join-Path $DkrSource "build\dkr.us.$revision.z64" 
     if (-not (Test-Path -LiteralPath $elfPath -PathType Leaf)) { Fail "The DKR build completed without producing the expected ELF: $elfPath" }
     if (-not (Test-Path -LiteralPath $builtRomPath -PathType Leaf)) { Fail "The DKR build completed without producing the expected ROM image: $builtRomPath" }
     Write-Host "[OK] Matching DKR ELF: $elfPath" -ForegroundColor Green
@@ -488,8 +508,8 @@ try {
     }
     New-Item -ItemType Directory -Force -Path $GeneratedFunctions | Out-Null
 
-    $tomlPath = Join-Path $RuntimeRoot 'dkr.us.v77.generated.toml'
-    $recompPolicyPath = Join-Path $RuntimeRoot 'dkr.us.v77.recomp-policy.json'
+    $tomlPath = Join-Path $RuntimeRoot "dkr.us.$revision.generated.toml"
+    $recompPolicyPath = Join-Path $RuntimeRoot "dkr.us.$revision.recomp-policy.json" 
     if (-not (Test-Path -LiteralPath $recompPolicyPath -PathType Leaf)) {
         Fail "DKR recompilation policy is missing: $recompPolicyPath"
     }

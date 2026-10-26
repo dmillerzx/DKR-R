@@ -2,49 +2,95 @@ diff --git a/src/contrib/plume/plume_vulkan.cpp b/src/contrib/plume/plume_vulkan
 index d809d6c..3d317a6 100644
 --- a/src/contrib/plume/plume_vulkan.cpp
 +++ b/src/contrib/plume/plume_vulkan.cpp
-@@ -1456,8 +1456,11 @@ namespace plume {
+@@ -1451,13 +1451,23 @@ namespace plume {
+         VkComputePipelineCreateInfo pipelineInfo = {};
+         pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+         pipelineInfo.layout = pipelineLayout->vk;
+         pipelineInfo.stage = stageInfo;
++        pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
++        pipelineInfo.basePipelineIndex = -1;
+ 
+         VkResult res;
+         {
+             dkr::runtime::performance_trace::Scope measure(dkr::runtime::performance_trace::Region::VulkanCompute);
              res = vkCreateComputePipelines(device->vk, device->pipelineCache, 1, &pipelineInfo, nullptr, &vk);
          }
++        if (res != VK_SUCCESS && device->pipelineCache != VK_NULL_HANDLE) {
++            fprintf(stderr, "[Android] vkCreateComputePipelines failed with cache (0x%X), retrying with VK_NULL_HANDLE...\n", res);
++            res = vkCreateComputePipelines(device->vk, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vk);
++        }
          if (res != VK_SUCCESS) {
 +            vk = VK_NULL_HANDLE;
              fprintf(stderr, "vkCreateComputePipelines failed with error code 0x%X.\n", res);
 -            return;
-+            fprintf(stderr, "[Android] Compute pipeline creation failed: entry=%s specConstants=%u\n",
-+                computeShader->entryPointName.c_str(), desc.specConstantsCount);
-+            dkr::runtime::graphics_health::quarantine_resource(dkr::runtime::graphics_health::Stage::ComputePipeline, res);
++            fprintf(stderr, "[Android] Compute pipeline creation failed: entry=%s specConstants=%u layout=%p shader=%p (Stage::ComputePipeline)\n",
++                computeShader->entryPointName.c_str(), desc.specConstantsCount, (void*)pipelineLayout->vk, (void*)computeShader->vk);
          }
      }
  
-@@ -1719,8 +1722,14 @@ namespace plume {
+@@ -1714,13 +1724,27 @@ namespace plume {
+         pipelineInfo.pColorBlendState = &colorBlend;
+         pipelineInfo.pDepthStencilState = &depthStencil;
+         pipelineInfo.pDynamicState = &dynamicState;
+         pipelineInfo.layout = pipelineLayout->vk;
+         pipelineInfo.renderPass = renderPass;
++        pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
++        pipelineInfo.basePipelineIndex = -1;
+ 
+         VkResult res;
+         {
+             dkr::runtime::performance_trace::Scope measure(dkr::runtime::performance_trace::Region::VulkanGraphics);
              res = vkCreateGraphicsPipelines(device->vk, device->pipelineCache, 1, &pipelineInfo, nullptr, &vk);
          }
++        if (res != VK_SUCCESS && device->pipelineCache != VK_NULL_HANDLE) {
++            fprintf(stderr, "[Android] vkCreateGraphicsPipelines failed with cache (0x%X), retrying with VK_NULL_HANDLE...\n", res);
++            res = vkCreateGraphicsPipelines(device->vk, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vk);
++        }
          if (res != VK_SUCCESS) {
 +            vk = VK_NULL_HANDLE;
              fprintf(stderr, "vkCreateGraphicsPipelines failed with error code 0x%X.\n", res);
 -            return;
-+            fprintf(stderr, "[Android] Graphics pipeline creation failed: stages=%zu renderTargets=%u specConstants=%u\n",
++            fprintf(stderr, "[Android] Graphics pipeline creation failed: stages=%zu renderTargets=%u specConstants=%u (Stage::GraphicsPipeline)\n",
 +                stages.size(), desc.renderTargetCount, desc.specConstantsCount);
 +            for (const VkPipelineShaderStageCreateInfo &failedStage : stages) {
 +                fprintf(stderr, "[Android]   failed stage 0x%X entry=%s\n", unsigned(failedStage.stage), failedStage.pName);
 +            }
-+            dkr::runtime::graphics_health::quarantine_resource(dkr::runtime::graphics_health::Stage::GraphicsPipeline, res);
          }
      }
  
-@@ -3200,11 +3209,17 @@ namespace plume {
+@@ -3141,7 +3165,13 @@ namespace plume {
+     }
+ 
++    static thread_local bool s_activeComputePipelineValid = false;
++
+     void VulkanCommandList::dispatch(uint32_t threadGroupCountX, uint32_t threadGroupCountY, uint32_t threadGroupCountZ) {
++        if (!s_activeComputePipelineValid) {
++            fprintf(stderr, "[Android] Warning: skipping vkCmdDispatch because active compute pipeline is null\n");
++            return;
++        }
+         assert(activeComputePipelineLayout != nullptr);
+ 
+         vkCmdDispatch(vk, threadGroupCountX, threadGroupCountY, threadGroupCountZ);
+     }
+@@ -3200,11 +3230,23 @@ namespace plume {
          switch (interfacePipeline->type) {
          case VulkanPipeline::Type::Compute: {
              const VulkanComputePipeline *computePipeline = static_cast<const VulkanComputePipeline *>(interfacePipeline);
 +            if (computePipeline->vk == VK_NULL_HANDLE) {
-+                dkr::runtime::graphics_health::quarantine_resource(dkr::runtime::graphics_health::Stage::ComputePipeline, VK_ERROR_INITIALIZATION_FAILED);
++                s_activeComputePipelineValid = false;
++                fprintf(stderr, "[Android] Warning: skipping bind of null compute pipeline (Stage::ComputePipeline)\n");
++                break;
 +            }
++            s_activeComputePipelineValid = true;
              vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline->vk);
              break;
          }
          case VulkanPipeline::Type::Graphics: {
              const VulkanGraphicsPipeline *graphicsPipeline = static_cast<const VulkanGraphicsPipeline *>(interfacePipeline);
 +            if (graphicsPipeline->vk == VK_NULL_HANDLE) {
++                fprintf(stderr, "[Android] Fatal: attempted to bind null graphics pipeline (Stage::GraphicsPipeline)!\n");
 +                dkr::runtime::graphics_health::quarantine_resource(dkr::runtime::graphics_health::Stage::GraphicsPipeline, VK_ERROR_INITIALIZATION_FAILED);
++                return;
 +            }
              vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->vk);
              break;
