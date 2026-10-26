@@ -1,3 +1,13 @@
+# 📱 DKR-R — Community Android & Handheld Port
+
+> [!NOTE]
+> **Community Android Port Notice**: This repository is a community-driven fork dedicated exclusively to the **Android** mobile and handheld gaming release (Retroid Pocket, Odin, Snapdragon Adreno devices).
+>
+> * For the official Windows, Linux, and Steam Deck releases, please visit the upstream repository: [ThatGuyMcd/DKR-R](https://github.com/ThatGuyMcd/DKR-R).
+> * Core game recompilation logic tracks upstream `ThatGuyMcd/DKR-R` releases.
+
+---
+
 # DKR-R - Diddy Kong Racing Recompiled
 
 <img width="1672" height="941" alt="Diddy Kong Racing Recompiled" src="https://github.com/user-attachments/assets/c913bee2-029c-4e29-9921-0f6abe7a3bf1" />
@@ -41,9 +51,7 @@ v1.0.12 is available for Windows x64, Linux x86_64, Linux ARM64 and Steam
 Deck. Both Linux architectures have AppImages. Linux needs glibc 2.38,
 GLIBCXX_3.4.32 and a compatible Vulkan driver.
 
-Android releases are no longer supported. I'm leaving Android out until
-performance is good enough. There are no new macOS or iOS downloads in
-this release. See [platform support](docs/PLATFORMS.md) for the details.
+Android releases are maintained in this community fork under [GitHub Releases](https://github.com/dmillerzx/DKR-R/releases), featuring native Vulkan pipeline guards for Qualcomm Adreno 650/Snapdragon 865 devices, dual US v1.0 and Rev A ROM support, and tuned handheld gamepad bindings. There are no new macOS or iOS downloads in this release. See [platform support](docs/PLATFORMS.md) for details.
 
 Accurate keeps the original presentation. Modern offers widescreen,
 interpolated presentation rates and optional graphics settings. **Escape**,
