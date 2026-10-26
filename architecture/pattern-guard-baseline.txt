@@ -57,6 +57,7 @@ patches/android/vulkan-descriptor-safety.patch PG013
 patches/android/vulkan-mapped-memory.patch PG013
 patches/android/vulkan-pass-retention.patch PG013
 patches/android/vulkan-pipeline-cache.patch PG013
+patches/android/vulkan-pipeline-failure.patch PG013
 patches/android/vulkan-prerotation.patch PG013
 patches/android/vulkan-read-barriers.patch PG013
 patches/android/vulkan-resource-failures.patch PG013
