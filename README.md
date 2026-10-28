@@ -1,10 +1,30 @@
 # 📱 DKR-R — Community Android & Handheld Port
 
+<p align="center">
+  <a href="https://github.com/dmillerzx/DKR-R/releases/latest">
+    <img src="https://img.shields.io/github/v/release/dmillerzx/DKR-R?label=Latest%20Android%20APK&color=brightgreen&style=for-the-badge" alt="Latest Android APK">
+  </a>
+  <a href="https://github.com/dmillerzx/DKR-R/releases">
+    <img src="https://img.shields.io/badge/Platform-Android%20arm64--v8a-blue?style=for-the-badge&logo=android" alt="Platform: Android arm64-v8a">
+  </a>
+  <a href="https://github.com/dmillerzx/DKR-R/issues">
+    <img src="https://img.shields.io/github/issues/dmillerzx/DKR-R?style=for-the-badge&color=orange" alt="GitHub Issues">
+  </a>
+</p>
+
 > [!NOTE]
-> **Community Android Port Notice**: This repository is a community-driven fork dedicated exclusively to the **Android** mobile and handheld gaming release (Retroid Pocket, Odin, Snapdragon Adreno devices).
+> **Community Android Port Notice**: This repository is a community-driven fork dedicated exclusively to the **Android** mobile and handheld gaming release (Retroid Pocket, Ayn Odin, Qualcomm Snapdragon / Adreno devices).
 >
 > * For the official Windows, Linux, and Steam Deck releases, please visit the upstream repository: [ThatGuyMcd/DKR-R](https://github.com/ThatGuyMcd/DKR-R).
 > * Core game recompilation logic tracks upstream `ThatGuyMcd/DKR-R` releases.
+
+### 🎮 Android Quick Start & Hardware Compatibility
+1. **Download**: Grab the latest `DKR-R-*-Android-arm64-preview.apk` from [GitHub Releases](https://github.com/dmillerzx/DKR-R/releases/latest).
+2. **ROM Requirement**: Provide an authentic US v1.0 or US Rev A (v1.1) Diddy Kong Racing ROM (`.z64`).
+3. **Verified Handheld Hardware**:
+   * **Retroid Pocket 5 / 4 Pro**: Locked 60 FPS interpolated presentation at native 1080p.
+   * **Ayn Odin 1 / Odin 2**: Full hardware acceleration across both Snapdragon 845/865/8Gen2 chipsets.
+   * **Adreno 650 GPU Crash Guard**: Built-in Vulkan pipeline protection eliminating driver `SIGSEGV` faults on Qualcomm devices.
 
 ---
 
