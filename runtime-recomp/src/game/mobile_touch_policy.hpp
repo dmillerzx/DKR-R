@@ -46,7 +46,6 @@ inline void validate(Layout& l) {
         p.size = std::clamp(p.size, 1.0F, 1.5F);
         p.opacity = std::clamp(p.opacity, .25F, 1.0F);
     }
-    l[8].visible = true; // An escape route cannot be removed by a bad layout.
 }
 inline Rect place(Rect safe, Point extent, const Placement& p) {
     const float w = std::min(extent.x * p.size, safe.w), h = std::min(extent.y * p.size, safe.h);

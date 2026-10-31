@@ -1533,7 +1533,9 @@ ultramodern::renderer::WindowHandle dkr::runtime::platform::create_window() {
             SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_BORDERLESS;
 #else
         Uint32 flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
-#if !defined(__ANDROID__) && !defined(DKR_IOS)
+#if defined(__ANDROID__)
+        flags |= SDL_WINDOW_FULLSCREEN;
+#elif !defined(DKR_IOS)
         // ui::configure restores the saved graphics config before this call.
         // Use borderless desktop fullscreen, matching RT64's normal window
         // mode, without changing the user's display mode or resolution.

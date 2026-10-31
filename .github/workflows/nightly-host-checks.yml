@@ -1,7 +1,5 @@
 name: Nightly host checks
 on:
-  schedule:
-    - cron: '17 8 * * *'
   workflow_dispatch:
     inputs:
       rounds:

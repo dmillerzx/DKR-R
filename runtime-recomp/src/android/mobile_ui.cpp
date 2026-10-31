@@ -487,6 +487,13 @@ void draw_controls(bool overlay) {
     Sample sample;
     {
         std::lock_guard lock(mutex);
+        static bool s_initial_joystick_check = false;
+        if (!s_initial_joystick_check) {
+            s_initial_joystick_check = true;
+            if (SDL_NumJoysticks() > 0) {
+                controller_active = true;
+            }
+        }
         visible = visibility == 1 || (visibility == 0 && !controller_active);
         sample = (test_active ? preview_contacts : contacts).sample(deadzone, sensitivity);
     }
@@ -538,7 +545,7 @@ void draw_controls(bool overlay) {
     };
     for (int g = 0; g < group_count; ++g) {
         auto& p = layouts[profile][g];
-        if ((!visible || !p.visible) && g != 8 && !edit_active)
+        if ((!visible || !p.visible) && !edit_active)
             continue;
         const bool compact_cross = (g == 2 || g == 3) && safe.h < 360;
         const Point extent = group_extent(g, safe);
@@ -644,10 +651,8 @@ void editor() {
     if (ImGui::IsItemActivated())
         remember(before_opacity);
     const auto before_visible = layouts[profile];
-    ImGui::BeginDisabled(selection == 8);
     if (ImGui::Checkbox("Visible", &p.visible))
         remember(before_visible);
-    ImGui::EndDisabled();
     bool overlap = false;
     for (int i = 0; i < group_count; ++i)
         for (int j = i + 1; j < group_count; ++j) {

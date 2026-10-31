@@ -102,10 +102,15 @@ constexpr int resolve_effective_presentation_rate(PresentationProfile profile,
 constexpr PresentationProfile resolve_settings_profile(
     int settings_version, bool settings_complete,
     PresentationProfile requested_profile) {
-    return settings_version >= kOldestCompatibleSettingsVersion &&
-               settings_version <= kCurrentSettingsVersion && settings_complete
-        ? normalise_presentation_profile(requested_profile)
-        : PresentationProfile::Accurate;
+    if (settings_version >= kOldestCompatibleSettingsVersion &&
+        settings_version <= kCurrentSettingsVersion && settings_complete) {
+        return normalise_presentation_profile(requested_profile);
+    }
+#if defined(__ANDROID__)
+    return PresentationProfile::Modern;
+#else
+    return PresentationProfile::Accurate;
+#endif
 }
 
 } // namespace dkr::runtime::enhancements
