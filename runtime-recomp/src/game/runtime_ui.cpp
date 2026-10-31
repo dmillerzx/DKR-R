@@ -2267,6 +2267,11 @@ void LoadSettings() {
                 config.wm_option = static_cast<WindowMode>(number);
             } else if (key == "resolution" && number >= 0 && number < 3) {
                 config.res_option = static_cast<Resolution>(number);
+#if defined(__ANDROID__)
+                if (config.res_option == Resolution::Auto) {
+                    config.res_option = Resolution::Original2x;
+                }
+#endif
             } else if (key == "aspect" && number >= 0 && number < 2) {
                 config.ar_option = static_cast<AspectRatio>(number);
             } else if (key == "antialiasing" && number >= 0 && number < 4) {
@@ -2289,6 +2294,11 @@ void LoadSettings() {
                     dkr::runtime::enhancements::clamp_presentation_rate(number);
             } else if (key == "modern_resolution" && number >= 0 && number < 3) {
                 g_modern_resolution = static_cast<Resolution>(number);
+#if defined(__ANDROID__)
+                if (g_modern_resolution == Resolution::Auto) {
+                    g_modern_resolution = Resolution::Original2x;
+                }
+#endif
             } else if (key == "modern_aspect" && number >= 0 && number < 2) {
                 g_modern_aspect = static_cast<AspectRatio>(number);
             } else if (key == "modern_antialiasing" && number >= 0 && number < 4) {

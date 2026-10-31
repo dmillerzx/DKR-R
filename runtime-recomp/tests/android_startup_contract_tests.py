@@ -103,8 +103,9 @@ class AndroidStartupContractTests(unittest.TestCase):
                         "--recount",
                         "--whitespace=error",
                         "--ignore-space-change",
-                        str(ROOT / patch),
+                        "-",
                     ],
+                    input=(ROOT / patch).read_bytes(),
                     check=True,
                 )
             source = (stage / directory_name / "plume_vulkan.cpp").read_text()
@@ -116,11 +117,14 @@ class AndroidStartupContractTests(unittest.TestCase):
             self.assertLess(compute.index("vkCreateComputePipelines("), compute.index("Stage::ComputePipeline"))
             bind = source.split("void VulkanCommandList::setPipeline(", 1)[1]
             bind = bind.split("default:", 1)[0]
-            for kind, point in (("Compute", "COMPUTE"), ("Graphics", "GRAPHICS")):
-                self.assertLess(
-                    bind.index(f"Stage::{kind}Pipeline"),
-                    bind.index(f"vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_{point}"),
-                )
+            self.assertLess(
+                bind.index("s_activeComputePipelineValid = false"),
+                bind.index("vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_COMPUTE"),
+            )
+            self.assertLess(
+                bind.index("Stage::GraphicsPipeline"),
+                bind.index("vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_GRAPHICS"),
+            )
         prerotation = (ROOT / "runtime-recomp/cmake/android/PreRotation.cmake").read_text()
         self.assertIn('generated/android-prerotation" android-pipeline-failure', prerotation)
         self.assertIn('"${DKRPORT_ROOT}/patches/android/vulkan-pipeline-failure.patch"', prerotation)

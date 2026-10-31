@@ -1730,6 +1730,9 @@ void dkr::runtime::F3DDKRRT64Bridge::FinishShadowScope(
         page_history.topology_signature = topology_signature;
         page_history.topology_valid = page_drawn && topology_complete;
         if (batch != nullptr) {
+            const auto saved_env_color = state->rdp->envColorStack[state->rdp->envColorStackSize - 1];
+            state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = { 1.0f, 1.0f, 1.0f, 0.0f };
+            state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
             for (std::size_t triangle_index = 0U;
                  triangle_index < batch->triangle_count; ++triangle_index) {
                 const auto& triangle = batch->triangles[triangle_index];
@@ -1756,6 +1759,8 @@ void dkr::runtime::F3DDKRRT64Bridge::FinishShadowScope(
                 }
                 rsp.drawIndexedTri(vertices[0], vertices[1], vertices[2]);
             }
+            state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = saved_env_color;
+            state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
         }
         const std::uint32_t page_vertex_count =
             workload.drawData.vertexCount() - page_vertex_start;

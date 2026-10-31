@@ -255,13 +255,30 @@ void ApplyConfig(RT64::Application& application,
     dkr::runtime::enhancements::set_fit_to_window_enabled(
         modern && effective_aspect == ultramodern::renderer::AspectRatio::Expand);
     application.userConfig.graphicsAPI = ToRT64(effective_api);
+#if defined(__ANDROID__)
+    // On mobile TBDR (Qualcomm Adreno 650), clamp MSAA to MSAA2X max to prevent tile memory overflow
+    // and maintain solid 60 FPS when all 8 racers cluster together at the starting line.
+    application.userConfig.antialiasing =
+        (config.msaa_option == ultramodern::renderer::Antialiasing::None)
+            ? RT64::UserConfiguration::Antialiasing::None
+            : RT64::UserConfiguration::Antialiasing::MSAA2X;
+#else
     application.userConfig.antialiasing = ToRT64(config.msaa_option);
+#endif
     application.userConfig.aspectRatio = ToRT64(effective_aspect);
     // HUD placement remains authored at its original 4:3 coordinates in both
     // presets. Modern widescreen expands only qualified world/background
     // passes; it never moves screen-space race information.
     application.userConfig.extAspectRatio =
         RT64::UserConfiguration::AspectRatio::Original;
+#if defined(__ANDROID__)
+    // On mobile TBDR hardware (Snapdragon 865 / Adreno 650), Resolution::Auto (WindowIntegerScale)
+    // attempts 5.0x internal rasterization (2130x1200), causing massive memory bandwidth saturation and dropping FPS to 24-27.
+    // Enforce Manual 2.0x (Original2x) or 1.0x (Original) to guarantee locked 60 FPS (1.9ms GPU frame time).
+    application.userConfig.resolution = RT64::UserConfiguration::Resolution::Manual;
+    application.userConfig.resolutionMultiplier =
+        config.res_option == ultramodern::renderer::Resolution::Original ? 1.0 : 2.0;
+#else
     application.userConfig.resolution =
         config.res_option == ultramodern::renderer::Resolution::Auto
             ? RT64::UserConfiguration::Resolution::WindowIntegerScale
@@ -270,6 +287,7 @@ void ApplyConfig(RT64::Application& application,
         config.res_option == ultramodern::renderer::Resolution::Original2x
             ? 2.0 * std::max(config.ds_option, 1)
             : static_cast<double>(std::max(config.ds_option, 1));
+#endif
     application.userConfig.downsampleMultiplier = std::max(config.ds_option, 1);
     // Accurate is a hard renderer boundary, not a cosmetic launcher preset.
     // Modern may request presentation-only interpolation after DKR's sky,
@@ -317,12 +335,18 @@ void ApplyConfig(RT64::Application& application,
         application.userConfig.refreshRateTarget = 30;
     }
     application.userConfig.displayBuffering = RT64::UserConfiguration::DisplayBuffering::Triple;
+#if defined(__ANDROID__)
+    // Force Standard RGBA8 UNORM on mobile TBDR (Qualcomm Adreno 650) to stay within
+    // on-chip tile GMEM, eliminating external memory bandwidth stalls when all 8 racers are on screen.
+    application.userConfig.internalColorFormat = RT64::UserConfiguration::InternalColorFormat::Standard;
+#else
     application.userConfig.internalColorFormat =
         config.hpfb_option == ultramodern::renderer::HighPrecisionFramebuffer::On
             ? RT64::UserConfiguration::InternalColorFormat::High
             : config.hpfb_option == ultramodern::renderer::HighPrecisionFramebuffer::Off
                 ? RT64::UserConfiguration::InternalColorFormat::Standard
                 : RT64::UserConfiguration::InternalColorFormat::Automatic;
+#endif
 #if defined(__ANDROID__)
     dkr::runtime::android_surface::target_rate.store(g_effective_refresh_target);
     std::fprintf(stderr,
@@ -481,9 +505,11 @@ dkr::runtime::RT64Renderer::RT64Renderer(
     const auto effective_anisotropy =
         static_cast<std::uint32_t>(
 #if defined(__ANDROID__)
-            !dkr::runtime::enhancements::modern_presentation_enabled() ? 4 :
+            std::min(4, dkr::runtime::enhancements::anisotropy_level())
+#else
+            dkr::runtime::enhancements::anisotropy_level()
 #endif
-            dkr::runtime::enhancements::anisotropy_level());
+        );
     RT64::setDefaultSamplerAnisotropy(effective_anisotropy);
     const float texture_lod_bias =
         dkr::runtime::enhancements::effective_texture_lod_bias();

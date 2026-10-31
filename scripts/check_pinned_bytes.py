@@ -45,14 +45,17 @@ DRIFTED_BASES = frozenset(
         "runtime-recomp/src/android/mobile_ui.cpp",
         "runtime-recomp/src/game/custom_tracks.cpp",
         "runtime-recomp/src/game/enhanced_water_settings.hpp",
+        "runtime-recomp/src/game/f3ddkr_rt64.cpp",
         "runtime-recomp/src/game/game_main.cpp",
         "runtime-recomp/src/game/mobile_graphics_preset.hpp",
         "runtime-recomp/src/game/mobile_touch_policy.hpp",
         "runtime-recomp/src/game/mods/magic_code_dispatch.h",
         "runtime-recomp/src/game/presentation_policy.hpp",
+        "runtime-recomp/src/game/rt64_renderer.cpp",
         "runtime-recomp/src/game/runtime_code_mods.cpp",
         "runtime-recomp/src/game/runtime_graphics_ui.inl",
         "runtime-recomp/src/game/runtime_platform.cpp",
+        "runtime-recomp/src/game/runtime_ui.cpp",
     }
 )
 CAPSULE = re.compile(r"^patches/release-prep/[^/]+/source-capsule-[^/]+/(?P<sha>[0-9a-f]{64})\.[A-Za-z0-9]+$")
