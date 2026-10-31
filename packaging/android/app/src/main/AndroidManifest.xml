@@ -15,7 +15,7 @@
             android:authorities="${applicationId}.updates" android:exported="false"
             android:grantUriPermissions="true" />
         <activity android:name="io.github.thatguymcd.dkrr.DkrActivity"
-            android:screenOrientation="sensorLandscape" android:exported="true"
+            android:screenOrientation="landscape" android:exported="true"
             android:launchMode="singleTask"
             android:configChanges="layoutDirection|locale|orientation|uiMode|screenLayout|screenSize|smallestScreenSize|keyboard|keyboardHidden|navigation|density">
             <intent-filter>

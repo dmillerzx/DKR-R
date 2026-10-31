@@ -6,7 +6,11 @@
 namespace dkr::runtime::water::enhanced {
 // Presentation preferences are not guest data/checkpoint inputs.
 inline std::atomic<Quality> requested_quality{Quality::Original};
+#if defined(__ANDROID__)
+inline std::atomic<Reflection> requested_reflection{Reflection::Sky};
+#else
 inline std::atomic<Reflection> requested_reflection{Reflection::ScreenSpace};
+#endif
 inline std::atomic<bool> wakes_enabled{true};
 inline std::atomic<bool> spray_enabled{true};
 // -1 preserves the pre-tuning Enhanced/High behaviour on existing installs.
@@ -16,7 +20,11 @@ inline std::atomic<int> roughness_scale{100}, ripple_scale{100}, foam_scale{100}
 inline std::atomic<int> wake_strength{100}, clarity_scale{100}, refraction_scale{100};
 inline std::atomic<int> waterfall_detail{100};
 inline std::atomic<int> lava_lighting{100}, lava_pulse_strength{35}, lava_pulse_speed{100}, lava_light_range{100};
+#if defined(__ANDROID__)
+inline std::atomic<int> lava_lighting_enabled{0}, lava_lighting_quality{1};
+#else
 inline std::atomic<int> lava_lighting_enabled{1}, lava_lighting_quality{1};
+#endif
 // Compatibility keys only. All nearby lava glow now uses the cached path.
 // Keep intensity/off preferences; old ray-mode selections cannot restore
 // the expensive full-viewport lighting pass.

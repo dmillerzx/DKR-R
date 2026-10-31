@@ -58,27 +58,25 @@ index d809d6c..3d317a6 100644
          }
      }
  
-@@ -3141,7 +3165,13 @@ namespace plume {
+@@ -3141,7 +3165,10 @@ namespace plume {
      }
  
 +    static thread_local bool s_activeComputePipelineValid = false;
 +
      void VulkanCommandList::dispatch(uint32_t threadGroupCountX, uint32_t threadGroupCountY, uint32_t threadGroupCountZ) {
 +        if (!s_activeComputePipelineValid) {
-+            fprintf(stderr, "[Android] Warning: skipping vkCmdDispatch because active compute pipeline is null\n");
 +            return;
 +        }
          assert(activeComputePipelineLayout != nullptr);
  
          vkCmdDispatch(vk, threadGroupCountX, threadGroupCountY, threadGroupCountZ);
      }
-@@ -3200,11 +3230,23 @@ namespace plume {
+@@ -3200,11 +3227,21 @@ namespace plume {
          switch (interfacePipeline->type) {
          case VulkanPipeline::Type::Compute: {
              const VulkanComputePipeline *computePipeline = static_cast<const VulkanComputePipeline *>(interfacePipeline);
 +            if (computePipeline->vk == VK_NULL_HANDLE) {
 +                s_activeComputePipelineValid = false;
-+                fprintf(stderr, "[Android] Warning: skipping bind of null compute pipeline (Stage::ComputePipeline)\n");
 +                break;
 +            }
 +            s_activeComputePipelineValid = true;

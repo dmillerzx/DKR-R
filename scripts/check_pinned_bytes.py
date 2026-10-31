@@ -44,6 +44,7 @@ DRIFTED_BASES = frozenset(
     {
         "runtime-recomp/src/android/mobile_ui.cpp",
         "runtime-recomp/src/game/custom_tracks.cpp",
+        "runtime-recomp/src/game/enhanced_water_settings.hpp",
         "runtime-recomp/src/game/game_main.cpp",
         "runtime-recomp/src/game/mobile_graphics_preset.hpp",
         "runtime-recomp/src/game/mobile_touch_policy.hpp",
