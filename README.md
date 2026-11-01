@@ -44,7 +44,7 @@
   </a>
 </p>
 
-## DKR-R v1.0.12 Release Build
+## DKR-R v1.0.14 Release Build
 
 I've worked on making modded lobbies quicker to join and tidied up the Online
 menus. Friends now have compact cards, profile pictures can be changed, and
@@ -67,7 +67,7 @@ assets are supplied.
 3. Linux / Steam Deck: make the **AppImage** executable and launch it.
 4. Add your original ROM in **Play**, choose your controls and start.
 
-v1.0.12 is available for Windows x64, Linux x86_64, Linux ARM64 and Steam
+v1.0.14 is available for Windows x64, Linux x86_64, Linux ARM64 and Steam
 Deck. Both Linux architectures have AppImages. Linux needs glibc 2.38,
 GLIBCXX_3.4.32 and a compatible Vulkan driver.
 
@@ -100,7 +100,7 @@ still prevent direct connections. Joining a running race through the directory
 is separately gated by the service's spectator setting; it never admits a late
 racer. There is no host migration or bundled gameplay relay.
 
-Use matching complete v1.0.12 packages on every peer. Start with the
+Use matching complete v1.0.14 packages on every peer. Start with the
 [Online guide](docs/ONLINE_MULTIPLAYER.md), [public lobby guide](docs/PUBLIC_LOBBIES.md)
 and [spectator guide](docs/SPECTATORS.md).
 
@@ -153,7 +153,7 @@ automatic installation is available. See [Updates](docs/UPDATES.md).
 
 ## Guides and contributing
 
-- [Documentation index](docs/README.md), [v1.0.12 release notes](docs/PUBLIC-1.0.12-NOTES.txt)
+- [Documentation index](docs/README.md), [v1.0.14 release notes](docs/PUBLIC-1.0.12-NOTES.txt)
   and [changelog](CHANGELOG.md).
 - [Troubleshooting](docs/TROUBLESHOOTING.md) and [release validation](RELEASE-VALIDATION.md).
 - [Building](docs/BUILDING.md) and [development](docs/DEVELOPMENT.md).
