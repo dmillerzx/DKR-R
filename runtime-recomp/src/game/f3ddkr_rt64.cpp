@@ -1730,7 +1730,6 @@ void dkr::runtime::F3DDKRRT64Bridge::FinishShadowScope(
         page_history.topology_signature = topology_signature;
         page_history.topology_valid = page_drawn && topology_complete;
         if (batch != nullptr) {
-            const auto saved_env_color = state->rdp->envColorStack[state->rdp->envColorStackSize - 1];
             state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = { 1.0f, 1.0f, 1.0f, 0.0f };
             state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
             for (std::size_t triangle_index = 0U;
@@ -1759,8 +1758,6 @@ void dkr::runtime::F3DDKRRT64Bridge::FinishShadowScope(
                 }
                 rsp.drawIndexedTri(vertices[0], vertices[1], vertices[2]);
             }
-            state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = saved_env_color;
-            state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
         }
         const std::uint32_t page_vertex_count =
             workload.drawData.vertexCount() - page_vertex_start;
@@ -1822,6 +1819,8 @@ void dkr::runtime::F3DDKRRT64Bridge::process(RT64::Application& application,
     *data_ = fresh;
 
     RT64::State* state = application.state.get();
+    state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = { 1.0f, 1.0f, 1.0f, 0.0f };
+    state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
 #if defined(DKR_ENHANCED_WATER)
     // A rejected/aborted display list must not leak its optical material into
     // the next task's shadows, HUD or ordinary scenery.
@@ -2715,6 +2714,8 @@ void dkr::runtime::F3DDKRRT64Bridge::ApplyPresentationGroup(
                 dkr::runtime::presentation::kMaximumCanonicalShadowBatches);
             data.shadow_batch_count = 0U;
             data.shadow_scope_active = true;
+            state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = { 1.0f, 1.0f, 1.0f, 0.0f };
+            state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
 
             if (data.task_count - g_last_shadow_history_prune_task >=
                 kShadowHistoryRetentionTasks) {
@@ -3260,6 +3261,10 @@ void dkr::runtime::F3DDKRRT64Bridge::Triangle(RT64::State* state,
     auto& draw = state->ext.workloadQueue->workloads[state->ext.workloadQueue->writeCursor].drawData;
     const auto before_vertices = profile_water ? draw.vertexCount() : 0U;
     const auto started = profile_water ? track_performance::Clock::now() : track_performance::Clock::time_point{};
+    if (state->rdp->otherMode.zMode() == ZMODE_DEC) {
+        state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = { 1.0f, 1.0f, 1.0f, 0.0f };
+        state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
+    }
     std::uint64_t skipped = 0U;
     std::uint64_t skipped_culling = 0U;
     for (std::uint32_t i = 0; i < count; ++i) {
