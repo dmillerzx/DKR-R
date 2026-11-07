@@ -1,14 +1,14 @@
-# Building DKR-R v1.0.12
+# Building DKR-R v1.0.14
 
-Use the [v1.0.12 release Patch Pipeline](../patches/release-prep/v1.0.11/BUILDING.txt)
-and its `ReleaseOverlay.cmake`. The existing recipe now reads the root VERSION
+Use the [v1.0.14 release Patch Pipeline](../patches/release-prep/v1.0.11/BUILDING.txt)
+and its `ReleaseOverlay.cmake`. The existing recipe reads the root VERSION
 and includes the final character/profile and online-performance layers. It keeps
 the corrected live FOV call and Steam Deck sign-in storage, plus memory, render, scheduler
 handoff and updated vehicle repairs, above the retained playtest 4 fixes
 for mod joining, offline copies, race starts and spectator music, plus the Online directory,
 Scoreboard, party repairs, spectators, vehicles, achievements and texture tools,
 plus the previous SDK/Store/save/presentation layers. Building the base target
-alone omits those additions. `VERSION` and the compiled release value are `1.0.12`.
+alone omits those additions. `VERSION` and the compiled release value are `1.0.14`.
 
 The recipe requires the verified frozen 1.0.7 source capsule and existing normal,
 owned, camera, shadow, visual-model and RSP inputs. These are read-only build
@@ -17,7 +17,7 @@ checkout needs legitimate prepared ROM inputs before it can reproduce them.
 Windows/Linux/ARM64 must share the accepted source ledger. Never relabel
 an earlier binary as a new release.
 
-The v1.0.12 build set and exact static checks are in
+The v1.0.14 build set and exact static checks are in
 [release validation](../RELEASE-VALIDATION.md). Source build commands for Apple
 remain below; no new Apple package was built in this pass.
 
@@ -168,9 +168,15 @@ that basic build as reproduction of the full experimental Public Build.
 
 Run `./Setup-macOS.sh` to install and check prerequisites, or
 `./Setup-macOS.sh --skip-deps` to check without installing. Setup and Build's
-preparation share the same checks: full Xcode with Metal, GNU Make 4+ (`gmake`),
-CMake, Ninja, Python, SDL2, PCRE2, and a `sha1sum` supporting `-c --quiet`
+preparation share the same checks: the Command Line Tools (`xcode-select --install`),
+GNU Make 4+ (`gmake`), CMake, Ninja, Python, SDL2, PCRE2, and a `sha1sum` supporting `-c --quiet`
 (Homebrew `coreutils`). The verifier is checked before ROM extraction.
+
+Full Xcode is optional. When its Metal toolchain runs (`xcrun metal -v`), RT64's
+shaders are precompiled into metallibs at build time. Without it they're
+embedded as MSL source and compiled at runtime, which adds a compile the first
+time each shader combination is used. Pass `-DDKR_RT64_PRECOMPILE_MSL=ON` or
+`OFF` to override the configure-time probe.
 
 Build and either preparation script hold a checkout lock for their entire run.
 A second invocation in the same checkout fails immediately; nested preparation
@@ -188,7 +194,7 @@ Set `DKR_MAC_BUNDLE_VERSION=N[.N[.N]]` for an explicit release/CI build number
 Packaging checks the version metadata copied beside the executable after linking,
 so a new package label cannot silently rename a build of a different version.
 
-With Xcode setup and Homebrew installed:
+With the Command Line Tools and Homebrew installed:
 
 ```bash
 ./Build-macOS.sh --rom-v77 "/path/to/US 1.0.z64" --rom-v80 "/path/to/US Rev A.z64"
@@ -213,9 +219,9 @@ Setup recovery checks staged Python/native tools, and preparation uses isolated
 revision trees. Do not edit live dependencies or delete protected directories
 to recover a stage. See [macOS kit notes](../packaging/MACOS-BUILD-README.md).
 The current integrated Rollback backend remains gated out on Apple. The public
-Rollback-only v1.0.12 layer does not promise a fallback to a removed backend.
+Rollback-only v1.0.14 layer does not promise a fallback to a removed backend.
 Existing v1.0.8 Apple releases have their own feature/build scope; validate
-current Apple integration before producing a v1.0.12 package.
+current Apple integration before producing a v1.0.14 package.
 
 ## iOS sideload build
 
@@ -250,7 +256,7 @@ check those on an iPhone or iPad before distributing a release.
 
 Use the reviewed Linux ARM64 toolchain/sysroot and separate compiled
 outputs. Compose both normal and owned payloads above, with matching
-visual-model inputs, then configure through the v1.0.12 release overlay.
+visual-model inputs, then configure through the v1.0.14 release overlay.
 The older [ARM recipes](ARM-PLATFORM-PREVIEW.md) describe the initial
 cross-build setup; their preview versions and results stay historical.
 
@@ -261,7 +267,7 @@ Linux x86_64. QEMU checks do not replace physical GPU/audio/input tests.
 
 ## Android source work
 
-Android releases are no longer supported and there is no v1.0.12 APK.
+Android releases are no longer supported and there is no v1.0.14 APK.
 The new release overlay rejects Android. Historical source recipes and
 the v1.0.9 Android adapter remain available for development, with their
 original application identity, signing and version-code requirements.
@@ -316,5 +322,18 @@ outstanding device/gameplay checks in [release validation](../RELEASE-VALIDATION
 The current release includes [the startup hotfix pipeline](../patches/startup-memory/BUILDING.txt).
 That earlier layer used the frozen 1.0.7 inputs and an isolated runtime-memory
 patch for 1.0.8 (Android code 1080001). The current outer release layer supplies
-1.0.12 for Windows/Linux while retaining the startup correction. Android
+1.0.14 for Windows/Linux while retaining the startup correction. Android
 release metadata is not changed by this release.
+
+## v1.0.14 integration and reproducibility
+
+The accepted pipeline also binds the first-party analogue driving, controller
+feedback, launcher/overlay layouts, localisation resources, seasonal art, session
+content, display settings, lighting and crash reporting modules. Stable packages
+must be rebuilt from the final source, including their private helpers. Merely
+renaming a beta archive does not update embedded version or source identity.
+
+Use [Releasing](RELEASING.md) for the source freeze, exact package validation,
+update signing and approval boundary. Runtime compilation still needs the
+legitimate frozen/generated inputs described above. A source ZIP includes
+authored integration, not copyrighted ROMs, extracted assets or private capsules.
