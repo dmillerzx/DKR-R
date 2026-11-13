@@ -1,6 +1,6 @@
 # DKR-R development guide
 
-## v1.0.14 release contract
+## v1.0.15 release contract
 
 The final release recipe and prepared-input contract are in patches/release-prep/v1.0.11/BUILDING.txt. The SDK 2 Bible/public headers describe supported tools and API 1 compatibility. Gameplay/hardware acceptance is owner-led; compilation and static inspection are not runtime acceptance.
 
@@ -9,6 +9,12 @@ Edit first-party modules in place and extend an existing baselined layer only
 where it is still needed. Do not add another patch layer. The release work
 records a recoverable source snapshot and the exact documentation changes.
 The pattern guard, pinned-byte checks and contributor rules remain in force.
+
+The first-party file-picker module owns the bounded child-process protocol and
+private desktop helper. Crash reporting owns native fault context and producer
+identity; collecting a report after an update must retain the older identity.
+Player Select label layout is derived presentation state, not rollback state.
+Keep these boundaries when extending the existing tests and compatibility layer.
 
 Keep the changes focused and reproducible. Project-owned runtime code lives in
 `runtime-recomp/src/game`, tests in `runtime-recomp/tests`, release assets in
@@ -32,6 +38,8 @@ anything or changes dependency checkouts. `--list` shows the selected commands.
 On Windows, use `python` in place of `python3`; POSIX-only tests report skips.
 To run the Track Lab Python suites, use `--suite track-lab`. Missing private
 fixtures are reported as SKIP, not as successful retail-content tests.
+Tooling tests that need CMake (and Ninja) run in the opt-in `--suite host-tools`
+(CTest runs them too); `--suite all` includes both.
 
 For a single regression, invoke its test file directly, for example:
 

@@ -302,6 +302,10 @@ public:
         static const bool initialized=[]{WSADATA w;return WSAStartup(MAKEWORD(2,2),&w)==0;}();if(!initialized)return false;
 #endif
         socket_=::socket(AF_INET,SOCK_DGRAM,0);if(socket_==invalid)return false;
+        // macOS caps a UDP datagram at the send buffer, 9216 bytes by default and below MaxWire.
+        // Ask for the same queue the production socket does.
+        const int queue=1<<20;setsockopt(socket_,SOL_SOCKET,SO_SNDBUF,reinterpret_cast<const char*>(&queue),sizeof(queue));
+        setsockopt(socket_,SOL_SOCKET,SO_RCVBUF,reinterpret_cast<const char*>(&queue),sizeof(queue));
         sockaddr_in a{};a.sin_family=AF_INET;a.sin_addr.s_addr=htonl(INADDR_LOOPBACK);a.sin_port=htons(port);
         if(::bind(socket_,reinterpret_cast<sockaddr*>(&a),sizeof(a))!=0)return false;
 #if defined(_WIN32)
@@ -374,7 +378,7 @@ void socket_tests(bool rtc){
             for(unsigned limit=0;limit<128;++limit){n::PeerAddress source;Bytes b;if(!sockets[id]->receive(source,b,error))break;
                 Id physical=0;for(Id peer=1;peer<=3;++peer)if(source==addresses[peer])physical=peer;check(physical!=0,"logical sender address restored");
                 Id origin=0,seq=0;Bytes plain;check(secure::open(b,key(physical,id),901,origin,seq,plain)&&origin==physical,"original pair key and sender still verify");
-                if(plain.size()>=6&&plain[0]=='D'&&plain[5]==3)control(&keys[id],origin,plain);
+                if(plain.size()>=6&&plain[0]=='D'&&(plain[5]==3||plain[5]==6))control(&keys[id],origin,plain);
                 else {check((plain.size()==512||(rtc&&plain.size()==14400))&&plain[0]==0xee&&plain[1]<5,"gameplay bytes retained");if(seen.emplace(origin,seq).second)++received;}
             }}
         const auto v=view(&keys[1]);bool host_selected=false;for(const auto& row:v.rows)if(row.endpoint==2&&row.selected)host_selected=true;

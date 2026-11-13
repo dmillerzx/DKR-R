@@ -11,16 +11,40 @@ For missing Discord pictures, check that the profile API migrations and matching
 Workers are deployed, then sign in again. Existing online play can still work
 when picture import is unavailable.
 
-## v1.0.14 release contract
+## v1.0.15 release contract
 
 Normal mods share one personal Adventure. Check portable/profile location and Backups & Recovery before restoring. Keep installation receipts/recovery folders. Export logs/support details; report the exact release, ROM revision, course, packs and settings. The accepted HD-water startup fix is included; a hardware-specific problem still needs its own report.
 
 Start with the symptom and keep the original data. Please don't delete your
 saves or whole profile to troubleshoot a graphics, mod or connection failure.
 
+## Online pauses, high latency and live host settings
+
+Use matching complete v1.0.15 packages. Start with Automatic input delay and
+check the saved prediction window: existing preferences are not reset by an
+update. New profiles use 14 frames. Hosts can increase the window, up to 20,
+from Host settings in the lobby or in-game overlay and press Apply changes.
+More history needs more memory and can increase correction work. Two- or
+six-frame windows can produce substantial waits on high-latency connections.
+
+Keep all racing logs from the same attempt, including the host. Report racer/
+spectator counts, platforms, Wi-Fi/wired, route, ping, window, Auto/manual delay,
+mods and the exact scene. A low rendered frame rate, a correction taking too
+long and waiting for input need different diagnoses. The logs separate these.
+No window can hide an arbitrary outage indefinitely.
+
+Spectators never supply racing inputs. Their initial 1.5-second buffer target
+does not include all joining/catch-up time. A slow viewer may fall farther
+behind. Closing new spectator joins keeps existing viewers connected.
+
+The missing vanilla online car textures/remote road wheels are still open.
+Include screenshots and host/client logs, view mode, ROM, first/later race,
+Session mods state and Maximum vehicle detail. Do not delete saves or claim
+the older custom-character wheel-lighting repair fixes this online issue.
+
 ## Modded joins, race starts and spectator black screens
 
-Check that everyone has the complete v1.0.14 package first. This release
+Check that everyone has the complete v1.0.15 package first. This release
 includes the accepted playtest.4 fixes. Keep the downloaded offline-mod
 option enabled if you want those copies; matching installed content no
 longer causes the old identity-conflict warning. Genuine conflicts and
@@ -38,7 +62,7 @@ log also records `[spectator][music]`, `[spectator][admission]` and
 
 ## Missing HUD elements, memory reports or rejected graphics
 
-Use the full v1.0.14 package first. Keep `runtime.log` and
+Use the full v1.0.15 package first. Keep `runtime.log` and
 `runtime-previous.log`, with the track, ROM revision, mods, texture packs
 and action immediately before the problem. For Online, include the host
 and affected client or spectator logs from the same attempt.
@@ -55,7 +79,7 @@ Keep any new command/provenance reports; do not disable those checks.
 Water staying vanilla can mean an incomplete HD animation. All frames
 need matching replacements before that family can use HD consistently.
 For `unsupported car texture profile`, use the original updated export
-with v1.0.14. Unknown format revisions or enabled custom boost anchors
+with v1.0.15. Unknown format revisions or enabled custom boost anchors
 still need exporter/runtime support. See [Vehicles](VEHICLES.md).
 
 ## ROM rejected
@@ -88,7 +112,7 @@ An xdelta needs its exact original source revision; all clients must own that
 source if reconstruction requires it. A filename or successful emulator run is
 not proof of native compatibility.
 
-Use **Help & imports â†’ Prepare all source imports again** after supplying missing
+Use **Help & imports → Prepare all source imports again** after supplying missing
 sources/revisions. Cancel safely; do not modify receipts/reviews/journals.
 Memory budgets remain real even with the larger character roster.
 Reduce enabled content for a budget failure without deleting the installed set.
@@ -103,7 +127,7 @@ Use compatible complete packages and the same original ROM revision.
 The host creates the lobby after choosing mods/rules; changing them requires a
 new lobby. Clients must complete consent, preparation and verification.
 
-v1.0.14 uses Rollback; the old host-backend selector is removed.
+v1.0.15 uses Rollback; the old host-backend selector is removed.
 Try automatic input delay and a suitable prediction window for your route.
 A bounded input wait, renderer slowdown and scene-loading barrier are different
 problems: record the network overlay state and exact scene.
@@ -166,12 +190,29 @@ launch rather than deleting a ROM/save.
 Some graphics/scenery controls have narrower scope in Experimental Rollback.
 See [Graphics](GRAPHICS.md) for the actual restrictions.
 
+Flickering in Modern that moves as you turn, for example looking at a doorway
+in a hub or in Snowball Valley, is the sparkle particle effect being culled.
+It is more noticeable with a higher FOV and **Visibility margin** (Graphics >
+Vehicles & scenery > Reduce wide-screen scenery pop-in). It does not happen in
+Accurate. Still open: [#10](https://github.com/ThatGuyMcd/DKR-R/issues/10).
+
 ## Controller or gyro trouble
 
 Use [Controls](CONTROLLERS.md) to choose SDL2/SDL3 and run the N64 mapping wizard.
 Auto keeps one selected backend; it should not repeatedly rediscover every
 device during a race. Report periodic spikes with controller model, connection
 type, OS and backend; compare explicit SDL2/SDL3.
+
+If the launcher or game slows down as soon as a controller is connected, set
+**Controls > Advanced compatibility > Controller backend** to SDL2 or SDL3
+instead of Auto. Some controllers only behave on one of them; an 8BitDo N64
+pad over Bluetooth needed SDL3. Adding DKR-R to Steam as a non-Steam game with
+Steam Input enabled has also helped ([#29](https://github.com/ThatGuyMcd/DKR-R/issues/29),
+[#30](https://github.com/ThatGuyMcd/DKR-R/issues/30)).
+
+If controllers land on the wrong player, **Controller assignment** is probably
+on Automatic, which takes the first controller it sees. Choose Manual and
+assign each player's controller; that assignment is saved ([#79](https://github.com/ThatGuyMcd/DKR-R/issues/79)).
 
 Steam Deck native gyro must not also be mapped to mouse/stick by Steam Input.
 Calibrate while still, then recenter at the desired neutral angle.
@@ -186,10 +227,24 @@ character details and the log from that session.
 See [Sound](SOUND.md). Do not claim a missing cue was supplied by a mod until
 its source actually contains it.
 
+## Audio crackles or pops
+
+For short bursts of crackling or popping every few minutes, setting the
+controller backend to SDL2 or SDL3 instead of Auto (see above) is known to
+help, as is launching through Steam.
+If neither helps, add your OS, audio device, controller and FPS target to
+[#62](https://github.com/ThatGuyMcd/DKR-R/issues/62) or
+[#75](https://github.com/ThatGuyMcd/DKR-R/issues/75).
+
 ## Android startup and performance
 
+Android releases are currently unsupported; there is no v1.0.15 APK. See
+[Platform support](PLATFORMS.md). Snapdragon 865 / Adreno 650 devices such as
+the Retroid Pocket 5 crash at launch after `AdrenoVK-0: Failed to link shaders`
+in logcat; that is still open as [#70](https://github.com/ThatGuyMcd/DKR-R/issues/70).
+
 Send device/Android version, build code, graphics settings and scene.
-Use **About DKR-R â†’ Support summary â†’ Export Android Startup Logs** after
+Use **About DKR-R → Support summary → Export Android Startup Logs** after
 reopening the app. If performance recording or export itself crashes, stop
 retrying and report that separately. `adb logcat -d` can capture earlier
 Java/native loader failures when a normal runtime log never starts.
@@ -201,7 +256,7 @@ does not promise every handheld is already qualified.
 
 ## Logs and support reports
 
-Open **About DKR-R â†’ Support summary â†’ EXPORT SUPPORT SUMMARY**.
+Open **About DKR-R → Support summary → EXPORT SUPPORT SUMMARY**.
 The summary omits private paths, save contents, account/device identifiers and
 lobby codes. Raw logs/dumps are different: review them before sharing.
 
@@ -246,6 +301,18 @@ A configure failure lists missing dependencies together. The platform setup
 scripts check compiler/SDK prerequisites; the ROM-free checks do not require
 full runtime SDKs.
 
+## Linux AppImage won't start: libwayland-client.so.0
+
+```text
+error while loading shared libraries: libwayland-client.so.0: cannot open shared object file: No such file or directory
+```
+
+AppImages up to v1.0.15 expect the host to supply the Wayland client library.
+Install your distribution's package for it (`libwayland-client0` on
+Debian/Ubuntu). On systems without it, such as Batocera, see
+[#45](https://github.com/ThatGuyMcd/DKR-R/issues/45) for a user-tested
+workaround. Later AppImages carry their own fallback copy and start without it.
+
 ## Linux and Steam Deck launcher performance
 
 The launcher now requests acceleration automatically. Check the runtime log for
@@ -275,3 +342,26 @@ Automatic crash reporting is optional under About DKR-R > Support. A queued
 report retries while the launcher is open; there is no sender after the app
 closes. Raw dumps have separate consent and may contain personal data. Review
 manual support exports before sharing them. See [Crash reporting](CRASH_REPORTING.md).
+
+## File dialogs
+
+Install the complete package, including `libexec/dkr-r/DKR-R-FilePicker` on
+Linux or `DKR-R-FilePicker.exe` in the Windows libexec directory. A missing or
+failed helper returns an error; replacing only the main executable is not a
+complete update. Cancellation should return to the current page.
+
+On Linux, check the host desktop's GTK/GIO or portal setup if the dialog cannot
+open. DKR-R removes its AppImage-owned loader/module paths only in the dialog
+child; do not remove the game's bundled libraries to repair the host desktop.
+Record the dialog action, distribution and current/previous logs if it fails.
+The original Windows graphics-startup and Linux gameplay faults remain under
+investigation. Preserve matching dumps privately when available, with consent.
+
+## Custom character names
+
+Added Player Select names appear only for selected custom actors. Upper names
+sit above heads and lower names below feet. Use the complete updated package
+if names disappear when browsing. If it happens again, include the character
+package, selected slot/player count, ROM revision, aspect ratio and a screenshot.
+The fix covers bounded placement; invalid camera data during transitions still
+does not draw a label.
