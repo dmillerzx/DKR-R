@@ -1544,7 +1544,7 @@ void dkr::runtime::F3DDKRRT64Bridge::process(RT64::Application& application, con
     *data_ = fresh;
 
     RT64::State* state = application.state.get();
-    state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = { 1.0f, 1.0f, 1.0f, 0.0f };
+    state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = {1.0f, 1.0f, 1.0f, 0.0f};
     state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
     if (surgical::observing()) {
         unsigned surgical_water_quality = 0;
@@ -3085,7 +3085,7 @@ void dkr::runtime::F3DDKRRT64Bridge::Triangle(RT64::State* state, RT64::DisplayL
     const auto before_vertices = profile_water ? draw.vertexCount() : 0U;
     const auto started = profile_water ? track_performance::Clock::now() : track_performance::Clock::time_point{};
     if (state->rdp->otherMode.zMode() == ZMODE_DEC) {
-        state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = { 1.0f, 1.0f, 1.0f, 0.0f };
+        state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = {1.0f, 1.0f, 1.0f, 0.0f};
         state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
     }
     std::uint64_t skipped = 0U;

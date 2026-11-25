@@ -286,8 +286,9 @@ void ApplyConfig(RT64::Application& application, const ultramodern::renderer::Gr
     application.userConfig.extAspectRatio = RT64::UserConfiguration::AspectRatio::Original;
 #if defined(__ANDROID__)
     // On mobile TBDR hardware (Snapdragon 865 / Adreno 650), Resolution::Auto (WindowIntegerScale)
-    // attempts 5.0x internal rasterization (2130x1200), causing massive memory bandwidth saturation and dropping FPS to 24-27.
-    // Enforce Manual 2.0x (Original2x) or 1.0x (Original) to guarantee locked 60 FPS (1.9ms GPU frame time).
+    // attempts 5.0x internal rasterization (2130x1200), causing massive memory bandwidth saturation
+    // and dropping FPS to 24-27. Enforce Manual 2.0x (Original2x) or 1.0x (Original) to guarantee
+    // locked 60 FPS (1.9ms GPU frame time).
     application.userConfig.resolution = RT64::UserConfiguration::Resolution::Manual;
     application.userConfig.resolutionMultiplier =
         config.res_option == ultramodern::renderer::Resolution::Original ? 1.0 : 2.0;
