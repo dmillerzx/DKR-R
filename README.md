@@ -7,6 +7,8 @@
   <a href="https://github.com/dmillerzx/DKR-R/releases">
     <img src="https://img.shields.io/badge/Platform-Android%20arm64--v8a-blue?style=for-the-badge&logo=android" alt="Platform: Android arm64-v8a">
   </a>
+  <img src="https://img.shields.io/badge/Graphics-Vulkan%201080p%2060FPS-red?style=for-the-badge&logo=vulkan" alt="Vulkan 1080p 60FPS">
+  <img src="https://img.shields.io/badge/Updates-Obtainium%20Ready-purple?style=for-the-badge" alt="Obtainium Ready">
   <a href="https://github.com/dmillerzx/DKR-R/issues">
     <img src="https://img.shields.io/github/issues/dmillerzx/DKR-R?style=for-the-badge&color=orange" alt="GitHub Issues">
   </a>
@@ -26,6 +28,16 @@
    * **Retroid Pocket 5 / 4 Pro**: Locked 60 FPS interpolated presentation at native 1080p.
    * **Ayn Odin 1 / Odin 2**: Full hardware acceleration across both Snapdragon 845/865/8Gen2 chipsets.
    * **Adreno 650 GPU Crash Guard**: Built-in Vulkan pipeline protection eliminating driver `SIGSEGV` faults on Qualcomm devices.
+
+### What Makes This Android Fork Different
+
+| Feature | Android Handheld Implementation |
+| :--- | :--- |
+| **Mobile TBDR Tuning** | Clamps internal resolution to `2x`/`1x`, `MSAA2x`, `RGBA8`, and anisotropy `<= 4x` to prevent Adreno tile-memory stalls |
+| **Adreno 650 Crash Guard** | `vulkan-pipeline-failure.patch` ensures failed `vkCreate*Pipelines` never reach `vkCmdBindPipeline` as a null handle |
+| **Handheld Defaults** | Defaults to Modern 60 FPS presentation, 16:9 widescreen, sky-reflection water, and `sensorLandscape` orientation |
+| **HUD & Shadow Restoration** | Restores HUD visibility and shadow-scope environment color across modern presentation passes |
+| **Android Lifecycle & SAF** | `WindowInsetsController` sticky immersive mode, in-app SAF ROM import, and `DKRCrashReports` diagnostics |
 
 ---
 
