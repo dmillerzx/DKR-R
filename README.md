@@ -13,13 +13,14 @@
 </p>
 
 > [!NOTE]
-> **Community Android Port Notice**: This repository is a community-driven fork dedicated exclusively to the **Android** mobile and handheld gaming release (Retroid Pocket, Ayn Odin, Qualcomm Snapdragon / Adreno devices).
+> **Native Android-Only Fork**: This repository is a community-driven fork dedicated **exclusively to native Android (`arm64-v8a`) handheld releases** (Retroid Pocket, Ayn Odin, Qualcomm Snapdragon / Adreno devices).
 >
-> * For the official Windows, Linux, and Steam Deck releases, please visit the upstream repository: [ThatGuyMcd/DKR-R](https://github.com/ThatGuyMcd/DKR-R).
-> * Core game recompilation logic tracks upstream `ThatGuyMcd/DKR-R` releases.
+> * **Android Releases Only**: We do **not** publish Windows, Linux, macOS, or Steam Deck releases from this repository. For official desktop builds, visit the upstream repository: [ThatGuyMcd/DKR-R](https://github.com/ThatGuyMcd/DKR-R).
+> * **Handheld-Specific Optimizations**: All downstream optimizations (mobile TBDR 2x/MSAA2x/RGBA8 clamping, Adreno null-`VkPipeline` crash guard, 60 FPS modern defaults, sky-reflection water defaults, and Android SAF/immersive lifecycle) are tailored specifically for the Android handheld environment.
+> * Core game recompilation logic tracks upstream `ThatGuyMcd/DKR-R`.
 
 ### 🎮 Android Quick Start & Hardware Compatibility
-1. **Download**: Grab the latest `DKR-R-*-Android-arm64-preview.apk` from [GitHub Releases](https://github.com/dmillerzx/DKR-R/releases/latest).
+1. **Download**: Grab the latest `DKR-R-*-Android-arm64.apk` from [GitHub Releases](https://github.com/dmillerzx/DKR-R/releases/latest).
 2. **ROM Requirement**: Provide an authentic US v1.0 or US Rev A (v1.1) Diddy Kong Racing ROM (`.z64`).
 3. **Verified Handheld Hardware**:
    * **Retroid Pocket 5 / 4 Pro**: Locked 60 FPS interpolated presentation at native 1080p.
