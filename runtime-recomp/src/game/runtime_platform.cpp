@@ -1502,10 +1502,10 @@ ultramodern::renderer::WindowHandle dkr::runtime::platform::prepare_window_for_g
         }
         const Uint32 old_id = SDL_GetWindowID(g_window);
         SDL_DestroyWindow(g_window);
+        const Uint32 vulkan_flags =
+            SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_VULKAN;
         g_window = SDL_CreateWindow("DKR-R - Diddy Kong Racing Recompiled", SDL_WINDOWPOS_CENTERED,
-                                    SDL_WINDOWPOS_CENTERED, 1440, 900,
-                                    SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_FULLSCREEN |
-                                        SDL_WINDOW_VULKAN);
+                                    SDL_WINDOWPOS_CENTERED, 1440, 900, vulkan_flags);
         if (g_window == nullptr) {
             std::fprintf(stderr, "[boot][window] android vulkan handoff creation failed: %s\n", SDL_GetError());
             return {};
