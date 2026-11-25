@@ -21,7 +21,7 @@
 
 ### 🎮 Android Quick Start & Hardware Compatibility
 1. **Download**: Grab the latest `DKR-R-*-Android-arm64.apk` from [GitHub Releases](https://github.com/dmillerzx/DKR-R/releases/latest).
-2. **ROM Requirement**: Provide an authentic US v1.0 or US Rev A (v1.1) Diddy Kong Racing ROM (`.z64`).
+2. **ROM Selection (In-App Picker)**: Provide an authentic **US v1.0 or US Rev A (v1.1)** Diddy Kong Racing ROM (`.z64`). No manual folder placement is required — on first launch, use the **in-app Android file picker** to select your `.z64` ROM from anywhere on your device or MicroSD card (e.g., `<MicroSD>/ROMs/n64/`), and DKR-R will import it into app-private storage.
 3. **Verified Handheld Hardware**:
    * **Retroid Pocket 5 / 4 Pro**: Locked 60 FPS interpolated presentation at native 1080p.
    * **Ayn Odin 1 / Odin 2**: Full hardware acceleration across both Snapdragon 845/865/8Gen2 chipsets.
