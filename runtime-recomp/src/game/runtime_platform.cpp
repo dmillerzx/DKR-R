@@ -1574,9 +1574,9 @@ void* dkr::runtime::platform::prepare_window_for_launcher(bool retire_game_surfa
     if (g_window && (SDL_GetWindowFlags(g_window) & SDL_WINDOW_VULKAN)) {
         const Uint32 old_id = SDL_GetWindowID(g_window);
         SDL_DestroyWindow(g_window);
+        const Uint32 launcher_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_FULLSCREEN;
         g_window = SDL_CreateWindow("DKR-R - Diddy Kong Racing Recompiled", SDL_WINDOWPOS_CENTERED,
-                                    SDL_WINDOWPOS_CENTERED, 1440, 900,
-                                    SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_FULLSCREEN);
+                                    SDL_WINDOWPOS_CENTERED, 1440, 900, launcher_flags);
         std::fprintf(stderr, "[boot][window] android game-to-launcher retired=%u replacement=%u flags=0x%08X\n",
                      unsigned(old_id), g_window ? unsigned(SDL_GetWindowID(g_window)) : 0U,
                      g_window ? unsigned(SDL_GetWindowFlags(g_window)) : 0U);

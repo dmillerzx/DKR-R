@@ -700,8 +700,8 @@
       "reason": "Recorded before per-input reasons existed; earlier reasons are in the git history of this file."
     },
     "scripts/generate_replay_probe.py": {
-      "sha256": "93cc61c967eb0e854332ca15bd34d5e139bed2a4b673e8b04d953461951d9df1",
-      "reason": "The boss-finish and shadow hooks apply only to offline funcs payloads and return for frozen online resources or owned bootstrap. The owned hook set is identical to main for both revisions, and probe behavior and recomp policies are unchanged. Track Lab retains the runtime limit of 60 checkpoints."
+      "sha256": "ae7794506d30904937b544e3bf3173415d41813ab91aea5f6bc85c0a23c322ef",
+      "reason": "Normalize CRLF line endings in generate_replay_probe.py on Windows"
     },
     "scripts/generate_revision_policy.py": {
       "sha256": "bafbefad41542e00b6c5ec13b02acde69dda7f48e34025f46d92d028da6427b9",
