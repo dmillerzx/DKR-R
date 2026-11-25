@@ -127,7 +127,7 @@ class AndroidStartupContractTests(unittest.TestCase):
                 bind.index("Stage::GraphicsPipeline"),
                 bind.index("vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_GRAPHICS"),
             )
-        prerotation = (ROOT / "runtime-recomp/cmake/android/PreRotation.cmake").read_text()
+        prerotation = " ".join((ROOT / "runtime-recomp/cmake/android/PreRotation.cmake").read_text().split())
         self.assertIn('generated/android-prerotation" android-pipeline-failure', prerotation)
         self.assertIn('"${DKRPORT_ROOT}/patches/android/vulkan-pipeline-failure.patch"', prerotation)
 
