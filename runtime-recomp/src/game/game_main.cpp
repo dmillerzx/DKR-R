@@ -939,7 +939,8 @@ int DkrMain(int argc, char** argv) {
     graphics_config.rr_manual_value = 30;
     graphics_config.ds_option = 1;
 #if defined(__ANDROID__)
-    // First-run mobile budget for modern Android handhelds (e.g. RP5 / SD865). ui::configure below restores saved settings.
+    // First-run mobile budget for modern Android handhelds (e.g. RP5 / SD865).
+    // ui::configure below restores saved settings.
     graphics_config.res_option = ultramodern::renderer::Resolution::Original2x;
     graphics_config.hpfb_option = ultramodern::renderer::HighPrecisionFramebuffer::Off;
     graphics_config.rr_option = ultramodern::renderer::RefreshRate::Manual;

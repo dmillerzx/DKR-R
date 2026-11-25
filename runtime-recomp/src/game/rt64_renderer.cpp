@@ -273,10 +273,9 @@ void ApplyConfig(RT64::Application& application, const ultramodern::renderer::Gr
 #if defined(__ANDROID__)
     // On mobile TBDR (Qualcomm Adreno 650), clamp MSAA to MSAA2X max to prevent tile memory overflow
     // and maintain solid 60 FPS when all 8 racers cluster together at the starting line.
-    application.userConfig.antialiasing =
-        (config.msaa_option == ultramodern::renderer::Antialiasing::None)
-            ? RT64::UserConfiguration::Antialiasing::None
-            : RT64::UserConfiguration::Antialiasing::MSAA2X;
+    application.userConfig.antialiasing = config.msaa_option == ultramodern::renderer::Antialiasing::None
+                                              ? RT64::UserConfiguration::Antialiasing::None
+                                              : RT64::UserConfiguration::Antialiasing::MSAA2X;
 #else
     application.userConfig.antialiasing = ToRT64(config.msaa_option);
 #endif

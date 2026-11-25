@@ -1449,7 +1449,7 @@ void dkr::runtime::F3DDKRRT64Bridge::FinishShadowScope(RT64::State* state) {
         page_history.topology_signature = topology_signature;
         page_history.topology_valid = page_drawn && topology_complete;
         if (batch != nullptr) {
-            state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = { 1.0f, 1.0f, 1.0f, 0.0f };
+            state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = {1.0f, 1.0f, 1.0f, 0.0f};
             state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
             for (std::size_t triangle_index = 0U; triangle_index < batch->triangle_count; ++triangle_index) {
                 const auto& triangle = batch->triangles[triangle_index];
@@ -2511,7 +2511,7 @@ void dkr::runtime::F3DDKRRT64Bridge::ApplyPresentationGroup(RT64::State* state, 
                 std::min<std::size_t>(presentation_variant, dkr::runtime::presentation::kMaximumCanonicalShadowBatches);
             data.shadow_batch_count = 0U;
             data.shadow_scope_active = true;
-            state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = { 1.0f, 1.0f, 1.0f, 0.0f };
+            state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = {1.0f, 1.0f, 1.0f, 0.0f};
             state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
 
             if (data.task_count - g_last_shadow_history_prune_task >= kShadowHistoryRetentionTasks) {
