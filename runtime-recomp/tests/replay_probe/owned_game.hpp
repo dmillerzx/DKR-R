@@ -1,12 +1,17 @@
 #pragma once
+#include "netplay/check_autopilot.hpp"
 #include "netplay/experimental_session.hpp"
 #include "netplay/experimental_presentation.hpp"
 #include "rom_revision.hpp"
 #include <functional>
 #include <memory>
 
-namespace dkr::mods::online { class RuntimeResources; }
-namespace dkr::mods::code {struct FrozenSet;}
+namespace dkr::mods::online {
+class RuntimeResources;
+}
+namespace dkr::mods::code {
+struct FrozenSet;
+}
 
 namespace dkr::runtime::netplay::experimental {
 struct OwnedBootOptions {
@@ -24,7 +29,8 @@ struct OwnedBootOptions {
     std::vector<std::uint8_t> mod_bootstrap;
     std::shared_ptr<const dkr::mods::code::FrozenSet> code;
     std::vector<std::uint8_t> code_bootstrap;
-    std::uint64_t code_seed=0x444B52434F444531ULL;
+    std::uint64_t code_seed = 0x444B52434F444531ULL;
+    bool development = false;
 };
 struct ConfirmedAudio {
     std::uint64_t epoch = 0;
@@ -34,7 +40,7 @@ struct ConfirmedAudio {
     std::span<const std::uint8_t> pcm;
 };
 using ConfirmedAudioSink = std::function<bool(ConfirmedAudio, std::string&)>;
-using ConfirmedRumbleSink = std::function<void(unsigned,bool)>;
+using ConfirmedRumbleSink = std::function<void(unsigned, bool)>;
 struct OwnedSceneView {
     bool menu = false;
     std::uint32_t menu_id = 0;
@@ -45,9 +51,11 @@ struct OwnedSceneView {
     // Observation only: never a topology/ownership/confirmation decision.
     std::uint8_t finished_racers = 0;
     bool tt_camera = false;
+    // Self-test autopilot input only (check_autopilot.hpp); one racer per port.
+    AutopilotView autopilot;
 };
 class OwnedGame : public SceneSimulation {
-public:
+  public:
     // Owner-thread view of actual guest state, never a requested/faked scene.
     virtual OwnedSceneView scene_view() const = 0;
     virtual bool publish_current(std::uint64_t epoch, std::uint32_t frame, std::string& error) = 0;
@@ -57,18 +65,22 @@ public:
     virtual std::uint32_t confirmed_count() const = 0;
     virtual std::span<const std::uint8_t> confirmed_save() const = 0;
     virtual std::span<const std::uint8_t> confirmed_paks() const = 0;
-    virtual bool install_initial_paks(std::uint64_t epoch,std::span<const std::uint8_t> images,std::string& error) = 0;
+    virtual bool install_initial_paks(std::uint64_t epoch, std::span<const std::uint8_t> images,
+                                      std::string& error) = 0;
     virtual void set_confirmed_rumble_sink(ConfirmedRumbleSink sink) = 0;
+    virtual std::span<const std::uint8_t> confirmed_records() const {
+        return {};
+    }
 };
 // Production registry contains only linked, isolated full-scene engines.
 bool owned_adapter_available(dkr::runtime::rom::Revision revision);
 std::string_view owned_adapter_identity(dkr::runtime::rom::Revision revision);
-std::unique_ptr<OwnedGame> make_owned_game_for_revision(dkr::runtime::rom::Revision revision,
-    std::span<const std::uint8_t> local_bootstrap,
-    std::span<const std::uint8_t> canonical_rom, std::uint64_t epoch,
-    PresentationMailbox& presentation, ConfirmedAudioSink sink, std::string& error,
-    bool start_at_title = false, std::uint32_t magic_codes = 0,
-    std::span<const std::uint8_t> initial_save = {}, OwnedBootOptions boot = {});
+std::unique_ptr<OwnedGame>
+make_owned_game_for_revision(dkr::runtime::rom::Revision revision, std::span<const std::uint8_t> local_bootstrap,
+                             std::span<const std::uint8_t> canonical_rom, std::uint64_t epoch,
+                             PresentationMailbox& presentation, ConfirmedAudioSink sink, std::string& error,
+                             bool start_at_title = false, std::uint32_t magic_codes = 0,
+                             std::span<const std::uint8_t> initial_save = {}, OwnedBootOptions boot = {});
 // Isolated CPU adapter used by the opt-in backend and private qualification.
 // Production passes normal_boot at the retail pre-INTRO boundary; the separate
 // start_at_title fixture preparation must not be combined with normal_boot.
@@ -77,8 +89,9 @@ std::unique_ptr<OwnedGame> make_owned_game_for_revision(dkr::runtime::rom::Revis
 // immutable render consumer. Modded bootstrap admission is separately gated.
 // The user ROM and local bootstrap are never included in distributed packages.
 std::unique_ptr<OwnedGame> make_owned_game(std::span<const std::uint8_t> local_bootstrap,
-    std::span<const std::uint8_t> canonical_rom, std::uint64_t epoch,
-    PresentationMailbox& presentation, ConfirmedAudioSink sink, std::string& error,
-    bool start_at_title = false, std::uint32_t magic_codes = 0,
-    std::span<const std::uint8_t> initial_save = {}, OwnedBootOptions boot = {});
-}
+                                           std::span<const std::uint8_t> canonical_rom, std::uint64_t epoch,
+                                           PresentationMailbox& presentation, ConfirmedAudioSink sink,
+                                           std::string& error, bool start_at_title = false,
+                                           std::uint32_t magic_codes = 0,
+                                           std::span<const std::uint8_t> initial_save = {}, OwnedBootOptions boot = {});
+} // namespace dkr::runtime::netplay::experimental

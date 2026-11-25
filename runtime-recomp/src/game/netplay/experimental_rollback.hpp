@@ -1,10 +1,15 @@
+#include "experimental_checkpoint_hash.hpp"
+#include "online_stability/live_prediction.hpp"
+#include "online_stability/snapshot_history.hpp"
 #pragma once
-
 #include "netplay_types.hpp"
+#include "../mods/sdk2_command.hpp"
 #include "rollback_state_store.hpp"
+#include "state_cross_check.hpp"
 
 #include <array>
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <optional>
 #include <span>
@@ -53,23 +58,26 @@ struct TickOutput {
 enum class RestoreStep { Ready, Pending, Failed };
 
 class Simulation {
-public:
+  public:
     virtual ~Simulation() = default;
     virtual SimulationContract contract() const = 0;
     // Some scenes run resource loaders inside their next CPU tick (menus and
     // chained cinematics). They may only run with agreed input AND no older
     // speculative history. This is an adapter policy, not a global lockstep
     // setting: the default gameplay policy retains prediction and rollback.
-    virtual bool requires_confirmed_tick() const { return false; }
+    virtual bool requires_confirmed_tick() const {
+        return false;
+    }
     // Dependencies of THIS next tick, derived only from checkpointed state.
     // Actual receipt/confirmation still covers every owner. Ignored controller
     // ports need not trigger a correction of a host-controlled menu animation.
-    virtual std::uint8_t input_dependencies() const {return 15;}
+    virtual std::uint8_t input_dependencies() const {
+        return 15;
+    }
     // Called only after input admission, before tick/checkpoint mutation.
     // Resource-changing ticks can retire render work and wait without blocking
     // networking/UI. Pending must not change the checkpointed world.
-    virtual RestoreStep prepare_tick(std::uint64_t epoch, std::uint32_t frame,
-                                     bool confirmed, std::string& error) {
+    virtual RestoreStep prepare_tick(std::uint64_t epoch, std::uint32_t frame, bool confirmed, std::string& error) {
         return RestoreStep::Ready;
     }
     virtual bool capture(std::span<std::uint8_t> state, std::string& error) = 0;
@@ -78,25 +86,49 @@ public:
     // here. Existing leases keep immutable bytes until the consumer drains;
     // this hook must not block for a worker or send fake SP/DP completion.
     // The default is only for worlds which publish no speculative output.
-    virtual bool before_restore(std::uint64_t epoch, std::uint32_t first_frame,
-                                std::string& error) { return true; }
+    virtual bool before_restore(std::uint64_t epoch, std::uint32_t first_frame, std::string& error) {
+        return true;
+    }
     // An owned GPU/WSI participant may already have begun consuming immutable
     // output. Retire queued work immediately, then return Pending until that
     // started work drains; NEVER block the owner/UI/network in this callback.
     // Ready means the original before_restore contract has also been fulfilled.
-    virtual RestoreStep prepare_restore(std::uint64_t epoch,std::uint32_t first_frame,
-                                        std::string& error) {
-        return before_restore(epoch,first_frame,error)?RestoreStep::Ready:RestoreStep::Failed;
+    virtual RestoreStep prepare_restore(std::uint64_t epoch, std::uint32_t first_frame, std::string& error) {
+        return before_restore(epoch, first_frame, error) ? RestoreStep::Ready : RestoreStep::Failed;
     }
     // Validate all participants before mutating any of them. Failure leaves
     // the entire world unchanged; native stacks/OS queues are not checkpoints.
-    virtual bool restore(std::span<const std::uint8_t> state,
-                         std::string& error) = 0;
-    virtual bool tick(std::uint32_t frame, const FrameInputs& inputs,
-                      TickOutput& output, std::string& error) = 0;
-    virtual bool commit(std::uint64_t epoch, std::uint32_t frame,
-                        std::span<const std::uint8_t> effects,
+    virtual bool restore(std::span<const std::uint8_t> state, std::string& error) = 0;
+    virtual bool development_command(std::uint64_t, std::uint32_t, const dkr::sdk2::Command& command,
+                                     std::string& error) {
+        if (command.empty())
+            return true;
+        error = "This simulation has no development command adapter.";
+        return false;
+    }
+    virtual bool tick(std::uint32_t frame, const FrameInputs& inputs, TickOutput& output, std::string& error) = 0;
+    virtual bool commit(std::uint64_t epoch, std::uint32_t frame, std::span<const std::uint8_t> effects,
                         bool scene_boundary, std::string& error) = 0;
+};
+
+// Self-test only (--self-test-owned-*): print `[check][state]` with the
+// confirmed-state hash every `every` confirmed frames (0 = off, the default).
+// Diagnostic output only: nothing is sent and no simulation state changes.
+void set_check_state_log_interval(std::uint32_t every);
+// Self-test hooks for the live cross-architecture state check (party_runtime):
+// force it on in a single-architecture lobby, and make this peer report a wrong
+// hash for the first sampled frame at or after `frame` (0 = never).
+void set_check_verify_forced(bool forced);
+bool check_verify_forced();
+void set_check_corrupt_state_at(std::uint32_t frame);
+std::uint32_t check_corrupt_state_at();
+
+// The hash of the confirmed state at a sampled frame (every kStateCheckEvery
+// confirmed frames), saved with the retained checkpoint and not hashed again.
+struct StateSample {
+    std::uint64_t epoch = 0U;
+    std::uint32_t frame = 0U; // absolute: the driver's start frame plus confirmed frames
+    std::uint64_t hash = 0U;
 };
 
 struct Configuration {
@@ -134,28 +166,70 @@ struct Statistics {
 };
 
 class Driver final {
-public:
+  public:
     explicit Driver(Simulation& simulation);
     // start() is a new scene/epoch only. No implicit mid-race conversion of
     // stable-mode state, and no reinterpretation of its committed predictions.
     bool start(Configuration configuration, std::string& error);
-    InputResult receive(std::uint64_t epoch, std::uint8_t owner,
-                        std::uint32_t frame, PackedInput input);
+    InputResult receive(std::uint64_t epoch, std::uint8_t owner, std::uint32_t frame, PackedInput input,
+                        dkr::sdk2::Command command = {});
     // At most one simulated tick per call, including correction replay. The
     // caller controls a wall-clock/replay budget and can always service UI.
     // Confirmation and correction remain serviceable when the caller has no
     // new local sample. False prevents only a NEW speculative tick, not replay
     // of an already-sampled tick or confirmation of a scene boundary.
     Step step(bool allow_advance = true);
-    const Statistics& statistics() const { return statistics_; }
-    const std::string& error() const { return error_; }
-    bool active() const { return active_ && error_.empty(); }
+    const Statistics& statistics() const {
+        return statistics_;
+    }
+    // Sampling is off until asked for, and holds at most kStateSamples. `base` is the
+    // frame this driver started at, so samples land on the same absolute frames
+    // (multiples of kStateCheckEvery) for a racer that joined mid-epoch.
+    void enable_state_samples(bool enabled, std::uint32_t base = 0U) {
+        state_samples_on_ = enabled;
+        state_sample_base_ = base;
+        if (!enabled)
+            state_samples_.clear();
+    }
+    bool take_state_sample(StateSample& sample) {
+        if (state_samples_.empty())
+            return false;
+        sample = state_samples_.front();
+        state_samples_.pop_front();
+        return true;
+    }
+    const std::string& error() const {
+        return error_;
+    }
+    bool active() const {
+        return active_ && error_.empty();
+    }
     bool correcting() const;
+    unsigned prediction_window() const {
+        return configuration_.prediction_window;
+    }
+    bool set_prediction_window(unsigned value, std::string& error) {
+        return dkr::online_stability::update_prediction_window(
+            active(), value, contract_.state_bytes, configuration_.prediction_window,
+            configuration_.checkpoint_budget_bytes, checkpoints_.get(), statistics_.checkpoint_bytes,
+            std::max(statistics_.next_frame, replay_goal_), error);
+    }
+    // Copy only the verified retained state at the confirmed frontier. Never
+    // rewind the live world or expose a speculative checkpoint to observers.
+    bool copy_confirmed_checkpoint(std::span<std::uint8_t> destination) const {
+        if (!active() || correcting() || statistics_.confirmed_frames >= statistics_.next_frame)
+            return false;
+        std::uint64_t expected = 0;
+        return checkpoints_->load(statistics_.confirmed_frames, destination, &expected) &&
+               checkpoint_hash(destination) == expected;
+    }
     std::uint8_t missing_input_mask() const;
-    bool scene_boundary_pending() const { return boundary_frame_ != UINT32_MAX || committed_boundary_; }
+    bool scene_boundary_pending() const {
+        return boundary_frame_ != UINT32_MAX || committed_boundary_;
+    }
     static bool valid_contract(const SimulationContract& contract);
 
-private:
+  private:
     static constexpr std::size_t kHistory = 128U;
     static constexpr std::uint32_t kFutureInputs = 48U;
     static constexpr std::size_t kMaximumEffectBytes = 192U * 1024U;
@@ -165,6 +239,7 @@ private:
         bool simulated = false;
         std::uint8_t actual_mask = 0U;
         std::uint8_t dependencies = 15U;
+        dkr::sdk2::Command actual_command{}, used_command{};
         FrameInputs actual{};
         FrameInputs used{};
         TickOutput output{};
@@ -181,9 +256,13 @@ private:
     SimulationContract contract_{};
     std::array<Frame, kHistory> frames_{};
     FrameInputs confirmed_inputs_{};
-    std::unique_ptr<RollbackStateStore> checkpoints_;
+    std::unique_ptr<dkr::online_stability::SnapshotHistory<RollbackStateStore>> checkpoints_;
     std::vector<std::uint8_t> scratch_;
     std::optional<std::uint32_t> prepared_restore_;
+    static constexpr std::size_t kStateSamples = 16U;
+    bool state_samples_on_ = false;
+    std::uint32_t state_sample_base_ = 0U;
+    std::deque<StateSample> state_samples_;
     Statistics statistics_{};
     std::uint32_t dirty_frame_ = UINT32_MAX;
     std::uint32_t replay_goal_ = 0U;

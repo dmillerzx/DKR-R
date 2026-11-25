@@ -6,7 +6,9 @@ First-party code lives in `runtime-recomp/`, `modding/` and `scripts/` and is
 edited in place. Third-party code is changed only through `patches/manifest.json`
 patch sets against `extern/`. Nothing stages, copies, string-replaces or swaps
 first-party sources at configure time. Guest hooks go in
-`guest-hooks/hooks.toml`, symbol tables in `symbols/*.toml`, and online
+`guest-hooks/hooks.toml` (the save-layout and portrait stages that feed the
+owned payload are the only scripts that write guest code), symbol tables in
+`symbols/*.toml`, and online
 identity lives in `netplay/legacy_identity.hpp` and changes only by deliberate
 edit.
 
@@ -14,10 +16,10 @@ The pattern guard (`scripts/pattern_guard.py`), the local hooks and the
 required CI checks all enforce this, so a change that breaks it fails before it
 can merge.
 
-> Transition note: until the patch-layer fold lands, `patches/<layer>/`
-> directories and the configure-time pipelines still exist on `main`. They are
-> listed in `architecture/pattern-guard-baseline.txt` and the guard only fails
-> on new ones. Don't add a new layer; edit the source in place instead.
+Through v1.0.11 the release was built from first-party layers under
+`patches/`; the fold replaced them with source, and the guard's baseline
+(`architecture/pattern-guard-baseline.txt`) is empty. Server-side code is in
+`services/`.
 
 ## Local setup
 
@@ -79,7 +81,7 @@ changed, so untouched legacy code doesn't block you.
 
 Anything that changes simulation, the wire format or an owned service changes
 online compatibility. Bump the identity in `netplay/legacy_identity.hpp` in the
-same PR. Both owners review that file (see `.github/CODEOWNERS`).
+same PR. Both owners review that file.
 
 ## What happened to `patches/<feature>`
 
@@ -99,8 +101,7 @@ settings are in `.github/ruleset-main.json`:
   `macos (macos-15-intel)`, `windows`, `asset-scan`, `dependency-lock`,
   `tooling` and `workflow-lint`. Skipping local hooks with `--no-verify`
   changes nothing about mergeability.
-- No approval is required for ordinary code. Files listed in
-  `.github/CODEOWNERS` (the rule files) need a review from the other owner.
+- No approval is required. The required checks are the gate.
 - Force-pushes and branch deletion are blocked.
 
 `tidy` is advisory for its first four weeks: it annotates findings on changed

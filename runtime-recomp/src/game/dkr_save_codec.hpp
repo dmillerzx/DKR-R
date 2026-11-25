@@ -19,6 +19,9 @@ constexpr std::uint8_t kMaximumTotalBalloons = 47U;
 constexpr std::uint8_t kMaximumHubBalloons = 7U;
 constexpr std::uint8_t kMaximumWorldBalloons = 8U;
 constexpr std::uint8_t kMaximumAmuletPieces = 4U;
+// The total balloon counter is a 7-bit field. The Free Balloon magic code can
+// push it past kMaximumTotalBalloons, so the editor allows anything that fits.
+constexpr std::uint8_t kMaximumStoredBalloons = 127U;
 
 struct AdventureSlot {
     std::array<std::uint8_t, kCourseCount> course_status{};
@@ -59,35 +62,45 @@ struct SaveImage {
     std::array<std::uint8_t, 2> course_times_tail{};
 };
 
-bool decode(std::span<const std::uint8_t> bytes, SaveImage& image,
-            std::string* error = nullptr);
+bool decode(std::span<const std::uint8_t> bytes, SaveImage& image, std::string* error = nullptr);
 std::vector<std::uint8_t> encode(const SaveImage& image);
 SaveImage blank_image();
 std::vector<std::uint8_t> blank_bytes();
-bool validate(std::span<const std::uint8_t> bytes,
-              std::string* error = nullptr);
+bool validate(std::span<const std::uint8_t> bytes, std::string* error = nullptr);
 
 // Rebuild only the six derived checksum regions in a 512-byte EEPROM image.
 // All gameplay, record, reserved and erased-slot bytes are preserved exactly.
 // This cannot infer whether payload data was damaged, so callers must retain
 // the original image as a safety backup before activating the result.
-bool repair_checksums(std::span<const std::uint8_t> bytes,
-                      std::vector<std::uint8_t>& repaired,
+bool repair_checksums(std::span<const std::uint8_t> bytes, std::vector<std::uint8_t>& repaired,
                       std::string* error = nullptr);
 
 // Decode and re-encode a valid image into one deterministic representation.
 // In particular, a retail erased (0xFF) empty slot and DKR-R's checksummed
 // empty slot become identical for multiplayer compatibility comparisons.
-bool canonical_bytes(std::span<const std::uint8_t> bytes,
-                     std::vector<std::uint8_t>& canonical,
+bool canonical_bytes(std::span<const std::uint8_t> bytes, std::vector<std::uint8_t>& canonical,
                      std::string* error = nullptr);
 
 // Constrain only fields that the Save Builder owns. Opaque/reserved bits and
 // T.T. records are deliberately preserved so loading the builder never
 // destroys data it does not expose for editing.
 void normalise_editable_fields(SaveImage& image);
-bool validate_editable_ranges(const SaveImage& image,
-                              std::string* error = nullptr);
+bool validate_editable_ranges(const SaveImage& image, std::string* error = nullptr);
+
+// Balloon accounting. The save stores a total plus one count per racing world;
+// central island balloons exist only in the total. Anything above the five
+// worlds plus a full central island (7) can only come from the Free Balloon
+// magic code and is reported as bonus. Below that the format can't tell a code
+// balloon from a central island balloon, so it counts as central island.
+unsigned world_balloons(const AdventureSlot& slot);
+unsigned hub_balloons(const AdventureSlot& slot);
+unsigned bonus_balloons(const AdventureSlot& slot);
+// Largest bonus the slot can hold: 0 unless the central island is full, then
+// whatever still fits in the 7-bit total.
+unsigned maximum_bonus_balloons(const AdventureSlot& slot);
+// Rewrite the total from the current world counts, a central island count and
+// a bonus count. Each is clamped to what the save can represent.
+void set_balloon_total(AdventureSlot& slot, unsigned hub, unsigned bonus);
 
 std::string sanitise_name(std::string_view value);
 const std::array<const char*, kCourseCount>& course_names();

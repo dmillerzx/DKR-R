@@ -1,5 +1,4 @@
 #pragma once
-
 #include "controller_snapshot.hpp"
 
 #include <cstddef>
@@ -37,6 +36,18 @@ enum class Action : std::uint8_t {
     // Accelerate (presses A while the Modern camera drives the race).
     LookBack,
     Accelerate,
+    OrbitUp,
+    OrbitDown,
+    OrbitLeft,
+    OrbitRight,
+    CameraRecenter,
+    CameraCycle,
+    CameraZoomIn,
+    CameraZoomOut,
+    CameraFirstPerson,
+    CameraXrRecenter,
+    AnalogueAccelerator,
+    AnalogueBrake,
     Count,
 };
 
@@ -71,6 +82,9 @@ struct State {
     float camera_y = 0.0F;
     bool look_back = false;
     bool accelerate = false;
+    float orbit_x = 0, orbit_y = 0;
+    std::uint32_t camera_actions = 0;
+    std::uint8_t accelerator = 0, brake = 0, driving_flags = 0;
 };
 
 struct ShortcutBinding {
@@ -91,8 +105,24 @@ void set_keyboard_binding(Action action, int scancode);
 void set_controller_binding(Action action, int source);
 void set_keyboard_binding(std::size_t player, Action action, int scancode);
 void set_controller_binding(std::size_t player, Action action, int source);
-void set_secondary_controller_binding(std::size_t player, Action action,
-                                      int source);
+void set_secondary_controller_binding(std::size_t player, Action action, int source);
+// Install a saved controller binding exactly as written. The set_* calls above
+// move a source off whichever action held it, which is right when a player
+// picks one. The shipped defaults deliberately share sources between actions
+// that are never live together (the right stick: C buttons and camera orbit;
+// the triggers: Z, Accelerate and the analogue pedals), so reloading a saved
+// table must not re-resolve them.
+void restore_controller_binding(std::size_t player, Action action, int source);
+void restore_secondary_controller_binding(std::size_t player, Action action, int source);
+// v1.0.14 and v1.0.15 reloaded the saved table through the set_* calls, so the
+// earlier action of each pair that shares a default source came back unbound:
+// Z, Accelerate and the four C buttons, for every player. Puts those defaults
+// back where a profile is still exactly as that reload left it: the action
+// unbound in both slots and its partner still on the shared source.
+// `keep_triggers` leaves Z and Accelerate alone, for a player whose analogue
+// driving layout took them off the triggers on purpose. Returns how many
+// bindings were restored.
+std::size_t repair_reload_unbound_defaults(std::size_t player, bool keep_triggers);
 void reset_defaults();
 void reset_defaults(std::size_t player);
 void copy_bindings(std::size_t source_player, std::size_t target_player);
@@ -110,10 +140,8 @@ void set_quick_restart_controller_binding(ShortcutBinding binding);
 bool consume_quick_restart_request();
 ShortcutBinding shortcut_keyboard_binding(ShortcutAction action);
 ShortcutBinding shortcut_controller_binding(ShortcutAction action);
-void set_shortcut_keyboard_binding(ShortcutAction action,
-                                   ShortcutBinding binding);
-void set_shortcut_controller_binding(ShortcutAction action,
-                                     ShortcutBinding binding);
+void set_shortcut_keyboard_binding(ShortcutAction action, ShortcutBinding binding);
+void set_shortcut_controller_binding(ShortcutAction action, ShortcutBinding binding);
 bool consume_shortcut_request(ShortcutAction action);
 
 float stick_deadzone();
@@ -162,20 +190,13 @@ int encode_controller_axis(int axis, bool positive);
 std::string keyboard_binding_name(int scancode);
 std::string controller_binding_name(int source);
 
-State poll(std::size_t player, SDL_GameController* controller,
-           SDL_GameController* gyro_controller,
-           bool include_keyboard, bool blocked,
-           bool allow_quick_restart = true,
-           bool global_shortcut_owner = true);
+State poll(std::size_t player, SDL_GameController* controller, SDL_GameController* gyro_controller,
+           bool include_keyboard, bool blocked, bool allow_quick_restart = true, bool global_shortcut_owner = true);
 
 // SDL-neutral input path used exclusively by isolated controller backends.
 // The native SDL2 path above remains intact as the compatibility fallback.
-State poll_snapshot(
-    std::size_t player,
-    const controllers::ControllerSnapshot* controller,
-    const controllers::ControllerSnapshot* gyro_controller,
-    bool include_keyboard, bool blocked,
-    bool allow_quick_restart = true,
-    bool global_shortcut_owner = true);
+State poll_snapshot(std::size_t player, const controllers::ControllerSnapshot* controller,
+                    const controllers::ControllerSnapshot* gyro_controller, bool include_keyboard, bool blocked,
+                    bool allow_quick_restart = true, bool global_shortcut_owner = true);
 
 } // namespace dkr::runtime::input

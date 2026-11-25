@@ -2,13 +2,9 @@
 
 ## v1.0.15 release contract
 
-The final release recipe and prepared-input contract are in patches/release-prep/v1.0.11/BUILDING.txt. The SDK 2 Bible/public headers describe supported tools and API 1 compatibility. Gameplay/hardware acceptance is owner-led; compilation and static inspection are not runtime acceptance.
+The release steps and prepared-input contract are in [Building](BUILDING.md#release-packages). The SDK 2 Bible/public headers describe supported tools and API 1 compatibility. Gameplay/hardware acceptance is owner-led; compilation and static inspection are not runtime acceptance.
 
-Keep using the accepted Patch Pipeline while the source fold is in progress.
-Edit first-party modules in place and extend an existing baselined layer only
-where it is still needed. Do not add another patch layer. The release work
-records a recoverable source snapshot and the exact documentation changes.
-The pattern guard, pinned-byte checks and contributor rules remain in force.
+Edit source and documentation in place; nothing is layered over the tree.
 
 The first-party file-picker module owns the bounded child-process protocol and
 private desktop helper. Crash reporting owns native fault context and producer
@@ -23,7 +19,7 @@ Keep the changes focused and reproducible. Project-owned runtime code lives in
 
 ## First contribution: tests without a ROM
 
-Start with Git and Python 3.10 or newer. From the repository root:
+Start with Git and Python 3.11 or newer. From the repository root:
 
 ```sh
 python3 scripts/check.py
@@ -40,6 +36,10 @@ To run the Track Lab Python suites, use `--suite track-lab`. Missing private
 fixtures are reported as SKIP, not as successful retail-content tests.
 Tooling tests that need CMake (and Ninja) run in the opt-in `--suite host-tools`
 (CTest runs them too); `--suite all` includes both.
+The tooling suite also runs `runtime-recomp/tests/replay_probe/test_generator.py`
+(the replay probe generator's pins and ABI checks, CTest `ReplayProbePipelineControlFlow`)
+when `build/generated/v77` and `v80` and the `extern/` checkouts exist, and
+prints a skip notice otherwise.
 
 For a single regression, invoke its test file directly, for example:
 
@@ -52,7 +52,7 @@ C++ host tests also need CMake 3.24+, a C++20 compiler and Ninja (or Visual
 Studio 2022 on Windows). Prepare the pinned source dependencies once:
 
 ```sh
-python3 scripts/bootstrap_dependencies.py --only n64-modern-runtime --only rt64 --only gekkonet --only monocypher --only libdatachannel --only mbedtls --only sdl3
+python3 scripts/bootstrap_dependencies.py --only n64-modern-runtime --only rt64 --only gekkonet --only monocypher --only libdatachannel --only mbedtls --only sdl3 --only dkr-decomp
 python3 scripts/apply_dependency_patches.py
 cd runtime-recomp
 cmake --preset host
@@ -231,7 +231,9 @@ Before handing over a feature or fix:
 2. Update the changelog and any packaged readme affected.
 3. State platform gates, limits and unfinished parts next to the feature.
 4. Retain historical investigations with a clear historical/proposal status.
-5. Check local links, example arguments and release metadata references.
+5. Check example arguments and release metadata references.
+   `python3 scripts/check_doc_links.py` checks the local links, and the tooling
+   suite runs it.
 6. Keep contributor attribution and licence texts intact.
 
 Use direct, practical British English. Explain the user action first, then

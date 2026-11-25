@@ -2,7 +2,7 @@
 
 ## Current release composition
 
-For v1.0.12 use the [release pipeline](../../../patches/release-prep/v1.0.11/BUILDING.txt). The module notes below
+For a release use the [release steps](../../../docs/BUILDING.md#release-packages). The module notes below
 explain this layer; their dated playtest paths are historical inputs, not the
 current release command. The accepted water/source capsule preserves the
 composed behaviour. Dependencies and generated guest checkouts stay read-only.
@@ -26,6 +26,12 @@ cmake --build <build-directory> --config Release --parallel 4
 ctest --test-dir <build-directory> -C Release --output-on-failure
 ```
 
+Four tests need sources only the full runtime has (`DKRNativeModWorldTests`,
+`DKRLegacyModBrowserUiTests`, `DKRLegacyModLibraryTests`,
+`DKRLegacyDkrmapArtworkTests`); add `-DDKR_LEGACY_FULL_RUNTIME_TESTS=ON` to try
+them (they do not link here yet). The guest tests that need regenerated sources
+are created only when their `DKR_LEGACY_*_ROOT` is set, and configure says which
+group it skipped.
 On Visual Studio generators executables are under Release. Use the test build
 directory for temporary fixtures, not the source tree.
 This standalone suite complements the complete configured runtime tests;

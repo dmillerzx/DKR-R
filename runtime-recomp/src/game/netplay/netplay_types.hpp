@@ -1,3 +1,4 @@
+#include "analog_driving/packed_input.hpp"
 #pragma once
 
 #include <array>
@@ -44,7 +45,7 @@ namespace dkr::runtime::netplay {
 // An older peer must never interpret these tokens/checkpoints as its roster.
 // v50 checks the replay engine and prepared resources before lobby admission,
 // and carries named startup contract components instead of an opaque digest.
-inline constexpr std::uint32_t kProtocolVersion = 50U;
+inline constexpr std::uint32_t kProtocolVersion = 52U;
 inline constexpr std::uint8_t kMaximumInputDelayFrames = 9U;
 inline constexpr std::size_t kMaximumPlayers = 4U;
 // Regular races/minigames support 2-4 peers. Adventure remains two-player.
@@ -93,21 +94,15 @@ constexpr bool synchronization_has_prediction_window(SynchronizationMode mode) {
 }
 constexpr const char* synchronization_name(SynchronizationMode mode) {
     switch (mode) {
-    case SynchronizationMode::Rollback: return "Host prediction (legacy Rollback)";
-    case SynchronizationMode::Lockstep: return "Strict input sync (Lockstep)";
-    case SynchronizationMode::ExperimentalRollback: return "Experimental rollback";
+    case SynchronizationMode::Rollback:
+        return "Host prediction (legacy Rollback)";
+    case SynchronizationMode::Lockstep:
+        return "Strict input sync (Lockstep)";
+    case SynchronizationMode::ExperimentalRollback:
+        return "Experimental rollback";
     }
     return "Unknown synchronization mode";
 }
-
-struct PackedInput {
-    std::uint16_t buttons = 0;
-    std::int8_t stick_x = 0;
-    std::int8_t stick_y = 0;
-
-    constexpr bool operator==(const PackedInput&) const = default;
-};
-static_assert(sizeof(PackedInput) == 4U);
 
 using FrameInputs = std::array<PackedInput, kMaximumPlayers>;
 
@@ -134,8 +129,7 @@ struct CompatibilityManifest {
 };
 
 struct Rules {
-    HostControlPolicy host_control =
-        HostControlPolicy::GuidedUntilCharacterSelect;
+    HostControlPolicy host_control = HostControlPolicy::GuidedUntilCharacterSelect;
     std::uint8_t maximum_players = 2U;
     bool automatic_input_delay = true;
     std::uint8_t manual_input_delay = 2U;
@@ -143,6 +137,7 @@ struct Rules {
     SynchronizationMode synchronization = SynchronizationMode::Rollback;
     bool relay_only = false;
     bool record_replay = true;
+    bool development = false;
 
     bool operator==(const Rules&) const = default;
 };
@@ -183,12 +178,12 @@ struct LaunchDescriptor {
     std::uint8_t input_delay_frames = 0U;
     std::uint8_t rollback_window = 0U;
     SynchronizationMode synchronization = SynchronizationMode::Rollback;
-    HostControlPolicy host_control =
-        HostControlPolicy::GuidedUntilCharacterSelect;
+    HostControlPolicy host_control = HostControlPolicy::GuidedUntilCharacterSelect;
+
+    bool development = false;
 
     constexpr bool occupied(std::size_t slot) const {
-        return slot < kMaximumPlayers &&
-               (occupied_mask & static_cast<std::uint8_t>(1U << slot)) != 0U;
+        return slot < kMaximumPlayers && (occupied_mask & static_cast<std::uint8_t>(1U << slot)) != 0U;
     }
 
     bool operator==(const LaunchDescriptor&) const = default;
@@ -201,7 +196,20 @@ bool valid_display_name(std::string_view value);
 bool valid_room_name(std::string_view value);
 bool valid_rules(const Rules& rules);
 std::uint64_t stable_hash(std::string_view bytes);
+// The hash racers on one architecture have always agreed on. It names the
+// architecture itself, so it is what every earlier build computes.
 std::uint64_t manifest_hash(const CompatibilityManifest& manifest);
+// The same hash without the architecture, which peers on different
+// architectures share when the rest of their manifests agree.
+std::uint64_t manifest_class_hash(const CompatibilityManifest& manifest);
+// What a host puts in the launch descriptor: the shared hash only when the
+// lobby actually spans architectures, so a single-architecture lobby launches
+// with the hash earlier builds expect.
+std::uint64_t launch_compatibility_hash(const CompatibilityManifest& host, bool spans_architectures);
+// A racer accepts either form computed over its own manifest.
+bool launch_hash_accepted(std::uint64_t hash, const CompatibilityManifest& own);
+// "class" when a launch hash is the architecture-free form, else "full" (for logs).
+std::string_view launch_hash_form(std::uint64_t hash, const CompatibilityManifest& host);
 bool valid_mod_manifest_hash(std::string_view hash);
 
 enum class OnlineFailureCode : std::uint8_t {
@@ -237,12 +245,13 @@ struct OnlineFailure {
     bool has_magic_code_details = false;
 };
 
-std::string incompatibility_reason(const CompatibilityManifest& expected,
-                                   const CompatibilityManifest& candidate,bool owned=false);
+std::string incompatibility_reason(const CompatibilityManifest& expected, const CompatibilityManifest& candidate,
+                                   bool owned = false);
 // Eligibility only: neither manifest is modified. Actual save installation
 // and consent-based mod reconstruction remain mandatory before admission.
 std::string session_content_sync_incompatibility(const CompatibilityManifest& expected,
-    const CompatibilityManifest& candidate,bool host_offers_mods,bool owned=false);
+                                                 const CompatibilityManifest& candidate, bool host_offers_mods,
+                                                 bool owned = false);
 OnlineFailure classify_online_failure(std::string_view message);
 std::string online_failure_display_message(std::string_view message);
 

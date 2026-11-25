@@ -1,6 +1,17 @@
 include_guard(GLOBAL)
-get_filename_component(_dkr_relay_root "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 function(dkr_add_peer_relay)
+    # Set here, not at file scope: the first include can come from inside
+    # another function, whose scope a file-level variable would not outlive.
+    get_filename_component(_dkr_relay_root "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/.." ABSOLUTE)
+    if(TARGET mbedcrypto AND NOT TARGET DKRMbedTLSThreadingTests)
+        add_executable(DKRMbedTLSThreadingTests "${_dkr_relay_root}/tests/mbedtls_threading_tests.cpp")
+        target_link_libraries(DKRMbedTLSThreadingTests PRIVATE mbedcrypto Threads::Threads)
+        target_compile_features(DKRMbedTLSThreadingTests PRIVATE cxx_std_20)
+        if(BUILD_TESTING)
+            add_test(NAME DKRMbedTLSThreading COMMAND DKRMbedTLSThreadingTests)
+            set_tests_properties(DKRMbedTLSThreading PROPERTIES TIMEOUT 30 LABELS "host;runtime")
+        endif()
+    endif()
     if(TARGET datachannel AND NOT TARGET DKRWebSocketIdleTests)
         add_executable(DKRWebSocketIdleTests "${_dkr_relay_root}/tests/websocket_idle_tests.cpp")
         target_link_libraries(DKRWebSocketIdleTests PRIVATE datachannel Threads::Threads)
@@ -11,10 +22,14 @@ function(dkr_add_peer_relay)
         endif()
     endif()
     if(NOT TARGET DKRPeerRelay)
-        add_library(DKRPeerRelay STATIC
+        add_library(
+            DKRPeerRelay
+            STATIC
             "${_dkr_relay_root}/src/game/netplay/peer_relay/core.cpp"
             "${_dkr_relay_root}/src/game/netplay/peer_relay/live_datagram.cpp"
-            "${_dkr_relay_root}/src/game/netplay/peer_relay/transport.cpp")
+            "${_dkr_relay_root}/src/game/netplay/peer_relay/owner_glue.cpp"
+            "${_dkr_relay_root}/src/game/netplay/peer_relay/transport.cpp"
+        )
         target_compile_features(DKRPeerRelay PUBLIC cxx_std_20)
         target_include_directories(DKRPeerRelay PUBLIC "${_dkr_relay_root}/src/game")
         target_link_libraries(DKRPeerRelay PUBLIC DKRNetplayCrypto)
@@ -28,7 +43,7 @@ function(dkr_add_peer_relay)
         if(TARGET datachannel)
             target_link_libraries(DKRPeerRelay PRIVATE datachannel)
             target_compile_definitions(DKRPeerRelay PRIVATE DKR_NETPLAY_WEBRTC=1)
-            target_include_directories(DKRPeerRelay PRIVATE "${_dkr_relay_root}/../extern/libdatachannel/deps/json/include")
+            target_include_directories(DKRPeerRelay PRIVATE "${DKR_DEPENDENCIES_DIR}/libdatachannel/deps/json/include")
         endif()
     endif()
     if(NOT TARGET DKRLiveDatagramTests)
@@ -39,6 +54,13 @@ function(dkr_add_peer_relay)
         endif()
         if(BUILD_TESTING)
             add_test(NAME DKRLiveDatagram COMMAND DKRLiveDatagramTests)
+        endif()
+    endif()
+    if(NOT TARGET DKRPeerRelayGlueTests)
+        add_executable(DKRPeerRelayGlueTests "${_dkr_relay_root}/tests/peer_relay_glue_tests.cpp")
+        target_link_libraries(DKRPeerRelayGlueTests PRIVATE DKRPeerRelay)
+        if(BUILD_TESTING)
+            add_test(NAME DKRPeerRelayGlue COMMAND DKRPeerRelayGlueTests)
         endif()
     endif()
     if(NOT TARGET DKRPeerRelayTests)
