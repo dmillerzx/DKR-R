@@ -1490,6 +1490,29 @@ ultramodern::renderer::WindowHandle dkr::runtime::platform::prepare_window_for_g
     if (g_window && !(SDL_GetWindowFlags(g_window) & SDL_WINDOW_VULKAN) &&
         !dkr::runtime::launcher::replace_surface_window(g_window, SDL_WINDOW_VULKAN, "launcher-to-game"))
         return {};
+#elif defined(__ANDROID__)
+    if (g_window && !(SDL_GetWindowFlags(g_window) & SDL_WINDOW_VULKAN)) {
+        // SDL_DestroyRenderer retires the launcher's GLES context, but Android's
+        // SDL_WindowData retains its EGLSurface until SDL_DestroyWindow runs.
+        // Android only permits one live SDL_Window at a time, so destroy first,
+        // then recreate with SDL_WINDOW_VULKAN before RT64 claims ANativeWindow.
+        if (SDL_GetRenderer(g_window) != nullptr) {
+            std::fprintf(stderr, "[boot][window] refused android handoff with a live launcher renderer\n");
+            return {};
+        }
+        const Uint32 old_id = SDL_GetWindowID(g_window);
+        SDL_DestroyWindow(g_window);
+        g_window = SDL_CreateWindow("DKR-R - Diddy Kong Racing Recompiled", SDL_WINDOWPOS_CENTERED,
+                                    SDL_WINDOWPOS_CENTERED, 1440, 900,
+                                    SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_FULLSCREEN |
+                                        SDL_WINDOW_VULKAN);
+        if (g_window == nullptr) {
+            std::fprintf(stderr, "[boot][window] android vulkan handoff creation failed: %s\n", SDL_GetError());
+            return {};
+        }
+        std::fprintf(stderr, "[boot][window] android launcher-to-game retired=%u replacement=%u flags=0x%08X\n",
+                     unsigned(old_id), unsigned(SDL_GetWindowID(g_window)), unsigned(SDL_GetWindowFlags(g_window)));
+    }
 #endif
     auto handle = create_window();
 #if defined(__APPLE__)
@@ -1546,6 +1569,17 @@ void* dkr::runtime::platform::prepare_window_for_launcher(bool retire_game_surfa
         (SDL_GetWindowFlags(g_window) & SDL_WINDOW_VULKAN)) {
         // Failed replacement retains the original window and CPU fallback.
         dkr::runtime::launcher::replace_surface_window(g_window, 0, "game-to-launcher");
+    }
+#elif defined(__ANDROID__)
+    if (g_window && (SDL_GetWindowFlags(g_window) & SDL_WINDOW_VULKAN)) {
+        const Uint32 old_id = SDL_GetWindowID(g_window);
+        SDL_DestroyWindow(g_window);
+        g_window = SDL_CreateWindow("DKR-R - Diddy Kong Racing Recompiled", SDL_WINDOWPOS_CENTERED,
+                                    SDL_WINDOWPOS_CENTERED, 1440, 900,
+                                    SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_FULLSCREEN);
+        std::fprintf(stderr, "[boot][window] android game-to-launcher retired=%u replacement=%u flags=0x%08X\n",
+                     unsigned(old_id), g_window ? unsigned(SDL_GetWindowID(g_window)) : 0U,
+                     g_window ? unsigned(SDL_GetWindowFlags(g_window)) : 0U);
     }
 #endif
     return g_window;

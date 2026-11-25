@@ -21,6 +21,12 @@
 > * **Handheld-Specific Optimizations**: All downstream optimizations (mobile TBDR 2x/MSAA2x/RGBA8 clamping, Adreno null-`VkPipeline` crash guard, 60 FPS modern defaults, sky-reflection water defaults, and Android SAF/immersive lifecycle) are tailored specifically for the Android handheld environment.
 > * Core game recompilation logic tracks upstream `ThatGuyMcd/DKR-R`.
 
+### 📱 Captured on Retroid Pocket 5 (1080p Widescreen, Vulkan, 60 FPS)
+
+| Android Launcher | 16:9 3D Intro / Title | 16:9 In-Game |
+| :---: | :---: | :---: |
+| ![DKR-R Android Launcher on RP5](docs/assets/android-rp5/launcher.png) | ![Diddy Kong Racing 16:9 Title on RP5](docs/assets/android-rp5/title.png) | ![Diddy Kong Racing 16:9 In-Game on RP5](docs/assets/android-rp5/gameplay.png) |
+
 ### 🎮 Android Quick Start & Hardware Compatibility
 1. **Download**: Grab the latest `DKR-R-*-Android-arm64.apk` from [GitHub Releases](https://github.com/dmillerzx/DKR-R/releases/latest).
 2. **ROM Selection (In-App Picker)**: Provide an authentic **US v1.0 or US Rev A (v1.1)** Diddy Kong Racing ROM (`.z64`). No manual folder placement is required — on first launch, use the **in-app Android file picker** to select your `.z64` ROM from anywhere on your device or MicroSD card (e.g., `<MicroSD>/ROMs/n64/`), and DKR-R will import it into app-private storage.

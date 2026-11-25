@@ -788,14 +788,17 @@ def audio_rsp_payload(rsp_source=None, dependencies_dir=None):
         )
         raw = source_path.read_bytes()
         if hashlib.sha256(raw).hexdigest() != expected:
-            # The reviewed Windows-generated input uses CRLF, whereas a Git
-            # checkout may contain LF. Admit only newline-equivalent bytes
-            # that reconstruct the SAME existing pinned input; never relax
-            # the source-content gate or rewrite a protected input file.
-            pinned_newlines = raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
-            if hashlib.sha256(pinned_newlines).hexdigest() != expected:
+            # A Git checkout on Windows (core.autocrlf=true) may have CRLF whereas
+            # the pinned input uses LF (or vice versa). Admit only newline-equivalent
+            # bytes that reconstruct the SAME existing pinned input.
+            lf_bytes = raw.replace(b"\r\n", b"\n")
+            crlf_bytes = lf_bytes.replace(b"\n", b"\r\n")
+            if hashlib.sha256(lf_bytes).hexdigest() == expected:
+                raw = lf_bytes
+            elif hashlib.sha256(crlf_bytes).hexdigest() == expected:
+                raw = crlf_bytes
+            else:
                 raise ValueError(f"Unreviewed private audio RSP input: {name}")
-            raw = pinned_newlines
         sources[Path(name).name] = raw.decode()
     header = sources["rsp.hpp"]
     header = header.replace(
