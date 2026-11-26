@@ -54,31 +54,18 @@
 
 [Join our Discord](https://discord.com/invite/AMWfXdBjNP) · [Open the Mod Library](https://positron-portal.com/dkr-r/) · [Downloads](https://github.com/ThatGuyMcd/DKR-R/releases)
 
-## DKR-R v1.0.15
+## DKR-R v1.0.16
 
-I've spent quite a bit of time working through DKR-R Online since v1.0.14.
-This update improves late-input recovery, reduces some of the rollback CPU work
-and gives spectators buffered confirmed playback. Hosts can now change the
-prediction window and input delay from the lobby or in-game overlay too.
+Start a Speedrunning attempt, watch a replay or race a ghost from Play. Browse
+public lobbies, suggest a host and hand over the lobby without closing it.
+Cloud Saves can sync Vanilla, Modded and Online Adventure independently.
+Save Manager keeps slots beside the editor, and Achievements opens the Badge
+Gallery.
 
-There's also automatic cleanup for old downloads and caches, a tidier Play page
-with Start Game always within reach, and custom character names that fit Player
-Select. File dialogs run in a separate helper, and crash reports keep more useful
-diagnostic information. The unresolved startup/gameplay crashes are recorded in
-the [crash reporting guide](docs/CRASH_REPORTING.md#remaining-crash-investigations).
-
-Your saves, mods and settings can stay. Use matching complete v1.0.15 packages
-on every machine in an online lobby. See the [full release notes](docs/PUBLIC-1.0.15-NOTES.txt)
-and [changelog](CHANGELOG.md) for everything since v1.0.14.
-
-Online waits are reduced, not eliminated. Very slow connections can still run
-out of prediction history. The reported missing vanilla online car textures and
-other racers' road wheels remain under investigation. Physical Steam Deck Wi-Fi
-and separate-machine acceptance remain necessary; see [validation](RELEASE-VALIDATION.md).
-
-DKR-R is a native static recompilation of Diddy Kong Racing. Bring your own
-legally obtained **US v1.0 or US Rev A/v1.1 ROM**. No ROM or extracted game
-assets are supplied.
+Use matching builds for online play. Bring your own legally obtained
+**US v1.0 or US Rev A/v1.1 ROM**. See the [release notes](docs/releases/1.0.16/RELEASE-NOTES.txt),
+[documentation index](docs/DOCUMENTATION-1.0.16.md) and
+[validation record](RELEASE-VALIDATION.md).
 
 ## Get started
 
@@ -88,17 +75,18 @@ assets are supplied.
 3. Linux / Steam Deck: make the **AppImage** executable and launch it.
 4. Add your original ROM in **Play**, choose your controls and start.
 
-v1.0.14 is available for Windows x64, Linux x86_64, Linux ARM64 and Steam Deck. Android releases are maintained in this community fork under [GitHub Releases](https://github.com/dmillerzx/DKR-R/releases), featuring native Vulkan pipeline guards for Qualcomm Adreno 650/Snapdragon 865 devices, dual US v1.0 and Rev A ROM support, and tuned handheld gamepad bindings. There are no new macOS or iOS downloads in this release. See [platform support](docs/PLATFORMS.md) and the [validation record](RELEASE-VALIDATION.md) for requirements.
+v1.0.16 is available for Windows x64, Linux x86_64, Linux ARM64 and Steam Deck. Android releases are maintained in this community fork under [GitHub Releases](https://github.com/dmillerzx/DKR-R/releases), featuring native Vulkan pipeline guards for Qualcomm Adreno 650/Snapdragon 865 devices, dual US v1.0 and Rev A ROM support, and tuned handheld gamepad bindings. There are no new macOS or iOS downloads in this release. See [platform support](docs/PLATFORMS.md) and the [validation record](RELEASE-VALIDATION.md) for requirements.
 
 Some legacy `.xdelta` mods require a clean **US v1.0 ROM to install**, including manual imports. Add it once in Play; you can keep v1.1 selected for playing. There is no bundled revision-conversion data. See [ROM setup](docs/ROM_SETUP.md).
 
 ## Play and the overlay
 
 **Escape**, **F1** or controller **Back/View** opens the overlay. It uses the same
-pages as the launcher. **Play** contains Achievements, Session mods and Save
-Manager. Turn Session mods OFF for your next vanilla session without changing
-any individual mod selections. Ordinary offline mods still share your personal
-Adventure; online and development saves keep separate owners.
+pages as the launcher. **Play** contains Achievements, **Speedrunning**,
+**Session Mods** and Save Manager. Turn **Session Mods** off to play Vanilla
+Adventure or on to play Modded Adventure. Each has its own save slots, balloons
+and unlocks. Online and development saves are stored separately. See the
+[Speedrunning guide](docs/SPEEDRUNNING.md) and [Saves](docs/SAVES.md).
 
 Start Game stays in a compact bar at the bottom while the page scrolls above it.
 It starts selected when a ROM is ready, and you can move away with the controller
@@ -156,8 +144,11 @@ and correction work. Spectators never supply racing inputs; loading and catching
 up can take longer than the initial 1.5-second playback-buffer target.
 
 See [Online](docs/ONLINE_MULTIPLAYER.md), [public lobbies](docs/PUBLIC_LOBBIES.md)
-and [spectators](docs/SPECTATORS.md). Gameplay uses the admitted peer transport;
-the website handles discovery and accounts. Host migration is not available.
+and [spectators](docs/SPECTATORS.md). Gameplay uses the admitted peer transport.
+The website handles discovery and accounts. In a supported waiting lobby, the
+host can offer ownership to another connected player. Everyone stays in the
+lobby once the new host accepts and the transfer completes. If the current host
+disconnects before a transfer completes, the lobby closes.
 
 ## Free mods and authoring
 
@@ -202,7 +193,7 @@ controls. Saves, ROMs and installed content are kept. See [Storage](docs/STORAGE
 
 ## Documentation and contributing
 
-- [All current guides](docs/README.md), [release notes](docs/PUBLIC-1.0.15-NOTES.txt)
+- [All current guides](docs/README.md), [release notes](docs/releases/1.0.16/RELEASE-NOTES.txt)
   and [known limitations/validation](RELEASE-VALIDATION.md).
 - [Troubleshooting](docs/TROUBLESHOOTING.md), [building](docs/BUILDING.md),
   [development](docs/DEVELOPMENT.md) and [contributing](CONTRIBUTING.md).
