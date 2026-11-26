@@ -261,10 +261,11 @@ int DetectDisplayRate() {
 #include "display_settings/renderer.inl"
 
 void ApplyConfig(RT64::Application& application, const ultramodern::renderer::GraphicsConfig& config) {
-    application.userConfig.idleWorkActive = dkr::runtime::render_power::gpu_keep_awake.load();
 #if defined(__ANDROID__)
-    std::fprintf(stderr, "[graphics][power] Android GPU keep-awake=%s\n",
-                 application.userConfig.idleWorkActive ? "on" : "off");
+    application.userConfig.idleWorkActive = false;
+    std::fprintf(stderr, "[graphics][power] Android GPU keep-awake=off\n");
+#else
+    application.userConfig.idleWorkActive = dkr::runtime::render_power::gpu_keep_awake.load();
 #endif
     const bool modern = dkr::runtime::enhancements::modern_presentation_enabled();
     const auto effective_api = modern ? config.api_option : ultramodern::renderer::GraphicsApi::Auto;
@@ -1042,7 +1043,11 @@ void dkr::runtime::RT64Renderer::update_screen() {
         return;
     }
     ApplyDisplayRequest(*application_, true);
+#if defined(__ANDROID__)
+    constexpr bool keep_awake = false;
+#else
     const bool keep_awake = render_power::gpu_keep_awake.load();
+#endif
     if (application_->userConfig.idleWorkActive != keep_awake) {
         application_->userConfig.idleWorkActive = keep_awake;
         application_->updateUserConfig(false);

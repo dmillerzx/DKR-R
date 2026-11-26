@@ -58,6 +58,34 @@ index d809d6c..3d317a6 100644
          }
      }
  
+@@ -3081,16 +3081,22 @@
+             thread_local std::vector<VkRect2D> scissorVector;
+             scissorVector.clear();
+ 
+             for (uint32_t i = 0; i < count; i++) {
+-                scissorVector.emplace_back(VkRect2D{ VkOffset2D{ scissorRects[i].left, scissorRects[i].top }, VkExtent2D{ uint32_t(scissorRects[i].right - scissorRects[i].left), uint32_t(scissorRects[i].bottom - scissorRects[i].top) } });
++                const int32_t clampedLeft = std::max<int32_t>(0, scissorRects[i].left);
++                const int32_t clampedTop = std::max<int32_t>(0, scissorRects[i].top);
++                const uint32_t clampedWidth = uint32_t(std::max<int32_t>(0, scissorRects[i].right - clampedLeft));
++                const uint32_t clampedHeight = uint32_t(std::max<int32_t>(0, scissorRects[i].bottom - clampedTop));
++                scissorVector.emplace_back(VkRect2D{ VkOffset2D{ clampedLeft, clampedTop }, VkExtent2D{ clampedWidth, clampedHeight } });
+             }
+ 
+             if (!scissorVector.empty()) {
+                 vkCmdSetScissor(vk, 0, uint32_t(scissorVector.size()), scissorVector.data());
+             }
+         }
+         else {
+             // Single element fast path.
+-            VkRect2D scissor = VkRect2D{ VkOffset2D{ scissorRects[0].left, scissorRects[0].top }, VkExtent2D{ uint32_t(scissorRects[0].right - scissorRects[0].left), uint32_t(scissorRects[0].bottom - scissorRects[0].top) } };
++            const int32_t clampedLeft = std::max<int32_t>(0, scissorRects[0].left);
++            const int32_t clampedTop = std::max<int32_t>(0, scissorRects[0].top);
++            const uint32_t clampedWidth = uint32_t(std::max<int32_t>(0, scissorRects[0].right - clampedLeft));
++            const uint32_t clampedHeight = uint32_t(std::max<int32_t>(0, scissorRects[0].bottom - clampedTop));
++            VkRect2D scissor = VkRect2D{ VkOffset2D{ clampedLeft, clampedTop }, VkExtent2D{ clampedWidth, clampedHeight } };
+             vkCmdSetScissor(vk, 0, 1, &scissor);
+         }
+     }
 @@ -3141,7 +3165,10 @@ namespace plume {
      }
  

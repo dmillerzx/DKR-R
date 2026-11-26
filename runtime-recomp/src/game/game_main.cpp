@@ -48,6 +48,8 @@
 #include <cwchar>
 #endif
 #if defined(__ANDROID__)
+#include <android/log.h>
+#include <thread>
 #include "graphics_health.hpp"
 #include "../android/android_platform.hpp"
 #endif
@@ -142,6 +144,42 @@ bool ConfigurePersistentRuntimeLog(const std::filesystem::path& config_directory
     FILE* stream = nullptr;
     if (_wfreopen_s(&stream, current.c_str(), L"w", stderr) != 0 || stream == nullptr) {
         return false;
+    }
+#elif defined(__ANDROID__)
+    FILE* log_stream = std::fopen(current.c_str(), "w");
+    if (log_stream == nullptr) {
+        return false;
+    }
+    int tee_pipe[2]{-1, -1};
+    if (pipe(tee_pipe) == 0) {
+        dup2(tee_pipe[1], STDERR_FILENO);
+        close(tee_pipe[1]);
+        std::thread([fd = tee_pipe[0], log_stream] {
+            char buf[1024];
+            std::string line;
+            ssize_t n = 0;
+            while ((n = read(fd, buf, sizeof(buf))) > 0) {
+                std::fwrite(buf, 1, static_cast<std::size_t>(n), log_stream);
+                std::fflush(log_stream);
+                line.append(buf, static_cast<std::size_t>(n));
+                std::size_t pos = 0;
+                while ((pos = line.find('\n')) != std::string::npos) {
+                    line[pos] = '\0';
+                    __android_log_write(ANDROID_LOG_INFO, "DKR-Stderr", line.c_str());
+                    line.erase(0, pos + 1);
+                }
+            }
+            if (!line.empty()) {
+                __android_log_write(ANDROID_LOG_INFO, "DKR-Stderr", line.c_str());
+            }
+            std::fclose(log_stream);
+            close(fd);
+        }).detach();
+    } else {
+        std::fclose(log_stream);
+        if (std::freopen(current.c_str(), "w", stderr) == nullptr) {
+            return false;
+        }
     }
 #else
     if (std::freopen(current.c_str(), "w", stderr) == nullptr) {

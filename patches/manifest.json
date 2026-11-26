@@ -455,7 +455,7 @@
     },
     {
       "path": "patches/android/vulkan-pipeline-failure.patch",
-      "sha256": "c24f6eddad6353ca0c6bb3cd8fb68ae2207cbfcb871c96d12c0b49ed835ace5d"
+      "sha256": "44b4d541292bcd02eeee8aae0cc5ae07c2e12a40e6122d0fdb13193d2a4bcea7"
     },
     {
       "path": "patches/android/vulkan-prerotation.patch",

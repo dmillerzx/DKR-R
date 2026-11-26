@@ -1550,6 +1550,9 @@ void dkr::runtime::F3DDKRRT64Bridge::process(RT64::Application& application, con
     *data_ = fresh;
 
     RT64::State* state = application.state.get();
+#if defined(__ANDROID__)
+    state->setRenderToRAM(0);
+#endif
     state->rdp->envColorStack[state->rdp->envColorStackSize - 1] = {1.0f, 1.0f, 1.0f, 0.0f};
     state->updateDrawStatusAttribute(RT64::DrawAttribute::EnvColor);
     if (surgical::observing()) {
