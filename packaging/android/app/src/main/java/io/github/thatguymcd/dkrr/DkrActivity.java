@@ -160,6 +160,7 @@ public final class DkrActivity extends SDLActivity {
         // its runtime exits. The message remains available on the next launch.
         getSharedPreferences("startup-health", MODE_PRIVATE).edit()
             .putString("graphics-failure", message).apply();
+        mirrorLogsToExternalFiles();
         runOnUiThread(() -> showFailureDialog(message));
     }
 
@@ -394,11 +395,38 @@ public final class DkrActivity extends SDLActivity {
             output.write(buffer, 0, length);
         }
     }
+    @Override protected void onPause() {
+        mirrorLogsToExternalFiles();
+        super.onPause();
+    }
     @Override protected void onDestroy() {
+        mirrorLogsToExternalFiles();
         performanceRecorder.destroy();
         if (pendingRequest != 0) documentResult(pendingRequest, null, null);
         pendingRequest = 0;
         fileIo.shutdown();
         super.onDestroy();
+    }
+
+    /** Mirrors internal runtime/RT64 logs to Android/data/<package>/files/*.log for user inspection. */
+    private void mirrorLogsToExternalFiles() {
+        if (fileIo.isShutdown()) return;
+        final File externalDir = getExternalFilesDir(null);
+        if (externalDir == null) return;
+        fileIo.execute(() -> {
+            copyLogIfPresent(new File(getFilesDir(), "config/logs/runtime.log"), new File(externalDir, "runtime.log"));
+            copyLogIfPresent(new File(getFilesDir(), "config/logs/runtime-previous.log"), new File(externalDir, "runtime-previous.log"));
+            copyLogIfPresent(new File(getFilesDir(), "config/rt64/rt64.log"), new File(externalDir, "rt64.log"));
+        });
+    }
+
+    private static void copyLogIfPresent(File source, File destination) {
+        if (!source.isFile() || source.length() == 0) return;
+        File parent = destination.getParentFile();
+        if (parent != null && !parent.isDirectory() && !parent.mkdirs()) return;
+        try (InputStream in = new FileInputStream(source);
+             OutputStream out = new FileOutputStream(destination, false)) {
+            copyBounded(in, out);
+        } catch (IOException ignored) { }
     }
 }

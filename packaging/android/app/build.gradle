@@ -21,11 +21,15 @@ android {
     }
     defaultConfig {
         applicationId 'io.github.thatguymcd.dkrr.preview'
+        def idSuffix = providers.gradleProperty('dkrApplicationIdSuffix').orNull
+        if (idSuffix) {
+            applicationIdSuffix idSuffix
+        }
         minSdk 28
         targetSdk 35
         // Bootstrap updater APK: keep the existing application/signing identity
         // and increment this for every published APK, including same-version fixes.
-        versionCode providers.gradleProperty('dkrVersionCode').map { it.toInteger() }.getOrElse(1080001)
+        versionCode providers.gradleProperty('dkrVersionCode').map { it.toInteger() }.getOrElse(1080026)
         versionName providers.gradleProperty('dkrVersionName').getOrElse(root.toPath().resolve('VERSION').toFile().text.trim())
         ndk { abiFilters 'arm64-v8a' }
     }
